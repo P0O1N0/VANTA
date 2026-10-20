@@ -1592,8 +1592,8 @@ class FerrofluidEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.gridW = 180;
-    this.gridH = 115;
+    this.gridW = 200;
+    this.gridH = 125;
     this.offCanvas = document.createElement('canvas');
     this.offCanvas.width = this.gridW;
     this.offCanvas.height = this.gridH;
@@ -1605,15 +1605,17 @@ class FerrofluidEngine {
     this.vh = new Float32Array(size);
     this.magField = new Float32Array(size);
 
+    // Dynamic dipoles orbiting underneath fluid
     this.dipoles = [
-      { x: 0.35, y: 0.45, z: 0.18, strength: 3.2, speed: 0.8, angle: 0.0, radius: 0.22 },
-      { x: 0.65, y: 0.55, z: 0.16, strength: 2.8, speed: -0.65, angle: 2.1, radius: 0.26 },
-      { x: 0.50, y: 0.32, z: 0.22, strength: 3.0, speed: 1.1, angle: 4.2, radius: 0.18 }
+      { x: 0.30, y: 0.45, z: 0.16, strength: 3.8, speed: 0.7, angle: 0.0, radius: 0.22 },
+      { x: 0.70, y: 0.55, z: 0.15, strength: 3.5, speed: -0.6, angle: 2.3, radius: 0.24 },
+      { x: 0.50, y: 0.35, z: 0.18, strength: 4.0, speed: 1.0, angle: 4.1, radius: 0.18 },
+      { x: 0.50, y: 0.65, z: 0.17, strength: 3.2, speed: -0.85, angle: 1.2, radius: 0.16 }
     ];
 
-    this.tension = 0.18;
-    this.viscosity = 0.06;
-    this.magCoupling = 1.45;
+    this.tension = 0.22;
+    this.viscosity = 0.05;
+    this.magCoupling = 1.8;
     this.time = 0;
     this.palette = PALETTES.monochrome;
     this.init();
@@ -1633,24 +1635,30 @@ class FerrofluidEngine {
     const mf = this.magField;
 
     this.time += dt;
-    const effVisc = 1.0 - (env ? env.viscosity : this.viscosity) * 2.5;
-    const effGravity = 0.04 + (env ? Math.max(0, env.gravity * 0.05) : 0);
+    const effVisc = Math.max(0.85, 0.982 - (env ? env.viscosity : this.viscosity) * 0.9);
+    const effGravity = 0.035 + (env ? Math.max(0, env.gravity * 0.04) : 0);
 
+    // Orbit dynamic dipoles
     for (let d = 0; d < this.dipoles.length; d++) {
       const dip = this.dipoles[d];
-      dip.angle += dip.speed * dt * 0.8;
+      dip.angle += dip.speed * dt * 0.75;
       dip.currX = dip.x + Math.cos(dip.angle) * dip.radius;
       dip.currY = dip.y + Math.sin(dip.angle) * dip.radius;
     }
 
+    // Interactive mouse magnet
     let hasMouseMagnet = false;
     let mouseMagX = 0, mouseMagY = 0;
+    let isMouseDown = false, isRightClick = false;
     if (mouse) {
       mouseMagX = mouse.x / this.canvas.width;
       mouseMagY = mouse.y / this.canvas.height;
       hasMouseMagnet = true;
+      isMouseDown = mouse.down;
+      isRightClick = (mouse.button === 2);
     }
 
+    // 1. Calculate magnetic field potential B(x, y)
     for (let y = 0; y < gh; y++) {
       const ny = y / gh;
       const yOffset = y * gw;
@@ -1663,14 +1671,14 @@ class FerrofluidEngine {
           const dx = nx - dip.currX;
           const dy = ny - dip.currY;
           const distSq = dx * dx + dy * dy + dip.z * dip.z;
-          bSum += dip.strength / Math.pow(distSq + 0.005, 1.5);
+          bSum += dip.strength / Math.pow(distSq + 0.006, 1.5);
         }
 
         if (hasMouseMagnet) {
           const dx = nx - mouseMagX;
           const dy = ny - mouseMagY;
-          const mz = mouse.down ? 0.08 : 0.16;
-          const mStr = mouse.down ? 5.5 : 2.5;
+          const mz = isMouseDown ? 0.07 : 0.14;
+          const mStr = isRightClick ? -5.0 : (isMouseDown ? 7.5 : 3.2);
           const distSq = dx * dx + dy * dy + mz * mz;
           bSum += mStr / Math.pow(distSq + 0.004, 1.5);
         }
@@ -1679,8 +1687,9 @@ class FerrofluidEngine {
       }
     }
 
+    // 2. Rosensweig instability height-field integration
     const tension = this.tension;
-    const magC = this.magCoupling * 0.00035;
+    const magC = this.magCoupling * 0.00045;
 
     for (let y = 1; y < gh - 1; y++) {
       const yOffset = y * gw;
@@ -1689,17 +1698,32 @@ class FerrofluidEngine {
         const lap = h[idx - 1] + h[idx + 1] + h[idx - gw] + h[idx + gw] - 4 * h[idx];
         const b = mf[idx];
 
+        // Non-linear Rosensweig normal traction force
         let fMag = 0;
-        if (b > 12.0) {
-          const excess = b - 12.0;
-          fMag = excess * excess * magC;
-          fMag *= (1.0 + 0.25 * Math.sin(x * 0.7) * Math.cos(y * 0.7));
+        if (b > 8.0) {
+          const excess = b - 8.0;
+          fMag = (excess * excess / (1.0 + 0.08 * excess)) * magC;
+          // Natural hexagonal peak resonance
+          fMag *= (1.0 + 0.22 * Math.cos(x * 0.72) * Math.cos(y * 0.72));
+        } else if (b < -2.0) {
+          // Repulsive magnetic pole (crater depression)
+          fMag = b * 0.004;
         }
 
         const accel = tension * lap - effGravity * h[idx] + fMag;
         vh[idx] = (vh[idx] + accel) * effVisc;
-        h[idx] = Math.max(-0.5, Math.min(3.5, h[idx] + vh[idx]));
+        h[idx] = Math.max(-0.8, Math.min(3.8, h[idx] + vh[idx]));
       }
+    }
+
+    // Continuous Neumann boundary conditions (eliminates edge cutoffs)
+    for (let x = 0; x < gw; x++) {
+      h[x] = h[gw + x];
+      h[(gh - 1) * gw + x] = h[(gh - 2) * gw + x];
+    }
+    for (let y = 0; y < gh; y++) {
+      h[y * gw] = h[y * gw + 1];
+      h[y * gw + gw - 1] = h[y * gw + gw - 2];
     }
   }
 
@@ -1709,10 +1733,14 @@ class FerrofluidEngine {
     const h = this.h;
     const data = this.offImgData.data;
 
-    const lx = 0.42, ly = -0.55, lz = 0.72;
-    const hx = lx * 0.5, hy = ly * 0.5, hz = (lz + 1.0) * 0.5;
-    const hLen = Math.hypot(hx, hy, hz);
-    const nhx = hx / hLen, nhy = hy / hLen, nhz = hz / hLen;
+    // Dual studio lighting: Key light (upper-left cool white) + Rim light (lower-right violet)
+    const lx1 = 0.38, ly1 = -0.58, lz1 = 0.71;
+    const lx2 = -0.50, ly2 = 0.50, lz2 = 0.45;
+
+    // Halfway vectors for specular highlights
+    const hx1 = lx1 * 0.5, hy1 = ly1 * 0.5, hz1 = (lz1 + 1.0) * 0.5;
+    const lenH1 = Math.hypot(hx1, hy1, hz1);
+    const nhx1 = hx1 / lenH1, nhy1 = hy1 / lenH1, nhz1 = hz1 / lenH1;
 
     let pIdx = 0;
     for (let y = 0; y < gh; y++) {
@@ -1720,25 +1748,43 @@ class FerrofluidEngine {
       for (let x = 0; x < gw; x++) {
         const idx = yOffset + x;
 
+        // Continuous normal calculation
         let nx = 0, ny = 0;
-        if (x > 0 && x < gw - 1) nx = -(h[idx + 1] - h[idx - 1]) * 1.6;
-        if (y > 0 && y < gh - 1) ny = -(h[idx + gw] - h[idx - gw]) * 1.6;
+        const xPrev = x > 0 ? idx - 1 : idx;
+        const xNext = x < gw - 1 ? idx + 1 : idx;
+        const yPrev = y > 0 ? idx - gw : idx;
+        const yNext = y < gh - 1 ? idx + gw : idx;
+
+        nx = -(h[xNext] - h[xPrev]) * 2.2;
+        ny = -(h[yNext] - h[yPrev]) * 2.2;
         let nz = 1.0;
         const nLen = Math.hypot(nx, ny, nz);
         nx /= nLen; ny /= nLen; nz /= nLen;
 
-        const nDotL = Math.max(0, nx * lx + ny * ly + nz * lz);
-        const nDotH = Math.max(0, nx * nhx + ny * nhy + nz * nhz);
-        const spec = Math.pow(nDotH, 26);
-        const elev = Math.max(0, Math.min(1.0, (h[idx] + 0.2) / 2.2));
+        // Blinn-Phong specular & diffuse
+        const nDotL1 = Math.max(0, nx * lx1 + ny * ly1 + nz * lz1);
+        const nDotL2 = Math.max(0, nx * lx2 + ny * ly2 + nz * lz2);
+        const nDotH1 = Math.max(0, nx * nhx1 + ny * nhy1 + nz * nhz1);
+        const spec1 = Math.pow(nDotH1, 28);
+        const spec2 = Math.pow(nDotL2, 16);
 
-        const baseR = 12 + elev * 28;
-        const baseG = 14 + elev * 32;
-        const baseB = 22 + elev * 54;
+        // Fresnel reflection factor
+        const fresnel = Math.pow(1.0 - Math.max(0, nz), 3.0);
+        const elev = Math.max(0, Math.min(1.0, (h[idx] + 0.3) / 2.5));
 
-        const r = Math.min(255, Math.floor(baseR + nDotL * 45 + spec * 220 + nx * 30));
-        const g = Math.min(255, Math.floor(baseG + nDotL * 50 + spec * 225 + ny * 25));
-        const b = Math.min(255, Math.floor(baseB + nDotL * 70 + spec * 245 + elev * 40));
+        // Deep inky ferrofluid black body with metallic mercury sheen
+        const baseR = 8 + elev * 20;
+        const baseG = 10 + elev * 22;
+        const baseB = 16 + elev * 38;
+
+        // Iridescent chromatic shift at steep spike angles (oil-slick thin film)
+        const iridR = fresnel * 40;
+        const iridG = fresnel * 65;
+        const iridB = fresnel * 110;
+
+        const r = Math.min(255, Math.floor(baseR + nDotL1 * 50 + spec1 * 230 + iridR));
+        const g = Math.min(255, Math.floor(baseG + nDotL1 * 55 + spec1 * 235 + iridG));
+        const b = Math.min(255, Math.floor(baseB + nDotL1 * 75 + spec1 * 250 + spec2 * 45 + iridB + elev * 30));
 
         data[pIdx] = r;
         data[pIdx + 1] = g;
@@ -2148,13 +2194,16 @@ class ThermalConvectionEngine {
     this.pressure = new Float32Array(size);
     this.div = new Float32Array(size);
 
-    this.numTracers = 800;
+    // 1,000 Flow Streamline Tracer Filaments
+    this.numTracers = 1000;
     this.tx = new Float32Array(this.numTracers);
     this.ty = new Float32Array(this.numTracers);
+    this.prevTx = new Float32Array(this.numTracers);
+    this.prevTy = new Float32Array(this.numTracers);
     this.tSpeed = new Float32Array(this.numTracers);
 
-    this.buoyancy = 3.6;
-    this.viscosity = 0.05;
+    this.buoyancy = 4.2;
+    this.viscosity = 0.04;
     this.palette = PALETTES.amber_ember;
 
     this.init();
@@ -2171,14 +2220,16 @@ class ThermalConvectionEngine {
       const yNorm = y / gh;
       for (let x = 0; x < gw; x++) {
         const xNorm = x / gw;
-        const pert = Math.sin(xNorm * Math.PI * 6) * 0.12 * Math.sin(yNorm * Math.PI);
+        const pert = Math.sin(xNorm * Math.PI * 6) * 0.18 * Math.sin(yNorm * Math.PI);
         this.temp[y * gw + x] = Math.max(0, Math.min(1.0, (1.0 - yNorm) + pert));
       }
     }
 
     for (let i = 0; i < this.numTracers; i++) {
-      this.tx[i] = Math.random() * gw;
-      this.ty[i] = Math.random() * gh;
+      this.tx[i] = Math.random() * (gw - 4) + 2;
+      this.ty[i] = Math.random() * (gh - 4) + 2;
+      this.prevTx[i] = this.tx[i];
+      this.prevTy[i] = this.ty[i];
       this.tSpeed[i] = 0;
     }
   }
@@ -2196,7 +2247,7 @@ class ThermalConvectionEngine {
     const div = this.div;
 
     const buoyK = this.buoyancy * (env ? (1.0 + env.gravity) : 1.0);
-    const visc = (env ? env.viscosity : this.viscosity) * 0.5;
+    const visc = (env ? env.viscosity : this.viscosity) * 0.45;
 
     // 1. Buoyancy force: hot fluid rises (-vy), cold fluid sinks (+vy)
     for (let y = 1; y < gh - 1; y++) {
@@ -2204,17 +2255,17 @@ class ThermalConvectionEngine {
       for (let x = 1; x < gw - 1; x++) {
         const idx = yOffset + x;
         const buoyancyForce = (T[idx] - 0.5) * buoyK;
-        vy[idx] -= buoyancyForce * dt * 8.0;
+        vy[idx] -= buoyancyForce * dt * 9.5;
       }
     }
 
-    // Mouse Thermal Injector
+    // Dynamic Mouse Thermal Injector / Vortex
     if (mouse && mouse.down) {
       const scaleX = gw / this.canvas.width;
       const scaleY = gh / this.canvas.height;
       const mx = Math.floor(mouse.x * scaleX);
       const my = Math.floor(mouse.y * scaleY);
-      const r = 10;
+      const r = 12;
 
       for (let dy = -r; dy <= r; dy++) {
         for (let dx = -r; dx <= r; dx++) {
@@ -2222,12 +2273,18 @@ class ThermalConvectionEngine {
           const py = my + dy;
           if (px >= 1 && px < gw - 1 && py >= 1 && py < gh - 1) {
             const idx = py * gw + px;
-            if (mouse.button === 2) {
-              T[idx] = 0.0;
-              vy[idx] += 12.0;
-            } else {
-              T[idx] = 1.0;
-              vy[idx] -= 18.0;
+            const dist = Math.hypot(dx, dy);
+            if (dist <= r) {
+              const falloff = 1.0 - dist / r;
+              if (mouse.button === 2) {
+                T[idx] = Math.max(0, T[idx] - 0.6 * falloff);
+                vy[idx] += 16.0 * falloff; // Sinking cold downdraft
+              } else {
+                T[idx] = Math.min(1.0, T[idx] + 0.8 * falloff);
+                vy[idx] -= 22.0 * falloff; // Rising hot plume
+                // Lateral convective expansion
+                vx[idx] += (dx / (dist + 0.1)) * 6.0 * falloff;
+              }
             }
           }
         }
@@ -2244,7 +2301,7 @@ class ThermalConvectionEngine {
       }
     }
 
-    for (let iter = 0; iter < 8; iter++) {
+    for (let iter = 0; iter < 10; iter++) {
       for (let y = 1; y < gh - 1; y++) {
         const yOffset = y * gw;
         for (let x = 1; x < gw - 1; x++) {
@@ -2268,8 +2325,8 @@ class ThermalConvectionEngine {
       const yOffset = y * gw;
       for (let x = 1; x < gw - 1; x++) {
         const idx = yOffset + x;
-        let prevX = x - vx[idx] * dt * 14.0;
-        let prevY = y - vy[idx] * dt * 14.0;
+        let prevX = x - vx[idx] * dt * 15.0;
+        let prevY = y - vy[idx] * dt * 15.0;
 
         if (prevX < 1) prevX = 1; else if (prevX > gw - 2) prevX = gw - 2;
         if (prevY < 1) prevY = 1; else if (prevY > gh - 2) prevY = gh - 2;
@@ -2294,7 +2351,7 @@ class ThermalConvectionEngine {
       }
     }
 
-    // Hot bottom, cold top
+    // Thermal boundaries: Bottom heated (molten), top chilled
     for (let x = 0; x < gw; x++) {
       nT[(gh - 1) * gw + x] = 1.0;
       nT[x] = 0.0;
@@ -2306,21 +2363,26 @@ class ThermalConvectionEngine {
     vx.set(nVx);
     vy.set(nVy);
 
-    // 4. Update 800 Tracer Streamlines
+    // 4. Update 1,000 Continuous Tracer Streamline Filaments
     for (let i = 0; i < this.numTracers; i++) {
+      this.prevTx[i] = this.tx[i];
+      this.prevTy[i] = this.ty[i];
+
       const gx = Math.max(1, Math.min(gw - 2, Math.floor(this.tx[i])));
       const gy = Math.max(1, Math.min(gh - 2, Math.floor(this.ty[i])));
       const idx = gy * gw + gx;
 
       const spdX = vx[idx];
       const spdY = vy[idx];
-      this.tx[i] += spdX * dt * 18.0;
-      this.ty[i] += spdY * dt * 18.0;
+      this.tx[i] += spdX * dt * 20.0;
+      this.ty[i] += spdY * dt * 20.0;
       this.tSpeed[i] = Math.hypot(spdX, spdY);
 
       if (this.tx[i] < 1 || this.tx[i] >= gw - 1 || this.ty[i] < 1 || this.ty[i] >= gh - 1) {
         this.tx[i] = Math.random() * (gw - 4) + 2;
-        this.ty[i] = gh - 4;
+        this.ty[i] = gh - 3;
+        this.prevTx[i] = this.tx[i];
+        this.prevTy[i] = this.ty[i];
       }
     }
   }
@@ -2330,20 +2392,38 @@ class ThermalConvectionEngine {
     const gh = this.gridH;
     const T = this.temp;
     const data = this.offImgData.data;
-    const pal = this.palette;
 
+    // 5-Stop High Dynamic Range Thermal Ramp
     let pIdx = 0;
     for (let i = 0; i < T.length; i++) {
       const val = Math.max(0, Math.min(1.0, T[i]));
-      const t = val * 2.99;
-      const idx = Math.floor(t);
-      const frac = t - idx;
-      const c1 = pal[idx];
-      const c2 = pal[idx + 1] || pal[idx];
+      let r = 0, g = 0, b = 0;
 
-      data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
-      data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
-      data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+      if (val < 0.25) {
+        const f = val / 0.25;
+        r = Math.floor(8 + f * 15);
+        g = Math.floor(14 + f * 45);
+        b = Math.floor(35 + f * 115);
+      } else if (val < 0.5) {
+        const f = (val - 0.25) / 0.25;
+        r = Math.floor(23 + f * 170);
+        g = Math.floor(59 + f * 60);
+        b = Math.floor(150 - f * 110);
+      } else if (val < 0.75) {
+        const f = (val - 0.5) / 0.25;
+        r = Math.floor(193 + f * 58);
+        g = Math.floor(119 + f * 70);
+        b = Math.floor(40 - f * 20);
+      } else {
+        const f = (val - 0.75) / 0.25;
+        r = 251;
+        g = Math.floor(189 + f * 66);
+        b = Math.floor(20 + f * 235);
+      }
+
+      data[pIdx] = r;
+      data[pIdx + 1] = g;
+      data[pIdx + 2] = b;
       data[pIdx + 3] = 255;
       pIdx += 4;
     }
@@ -2352,13 +2432,27 @@ class ThermalConvectionEngine {
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
 
+    // Draw Smooth Streamline Motion Filaments
     const scaleX = this.canvas.width / gw;
     const scaleY = this.canvas.height / gh;
-    this.ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+    this.ctx.lineWidth = 1.6;
+    this.ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+
+    this.ctx.beginPath();
     for (let i = 0; i < this.numTracers; i++) {
-      const spd = Math.min(1.0, this.tSpeed[i] / 4.0);
-      const sz = 1.4 + spd * 2.2;
-      this.ctx.fillRect(this.tx[i] * scaleX, this.ty[i] * scaleY, sz, sz);
+      const pX = this.prevTx[i] * scaleX;
+      const pY = this.prevTy[i] * scaleY;
+      const cX = this.tx[i] * scaleX;
+      const cY = this.ty[i] * scaleY;
+      this.ctx.moveTo(pX, pY);
+      this.ctx.lineTo(cX, cY);
+    }
+    this.ctx.stroke();
+
+    // Streamline glowing heads
+    this.ctx.fillStyle = "#ffffff";
+    for (let i = 0; i < this.numTracers; i += 3) {
+      this.ctx.fillRect(this.tx[i] * scaleX - 1, this.ty[i] * scaleY - 1, 2.2, 2.2);
     }
   }
 }
@@ -2751,8 +2845,32 @@ class VantaStudioApp {
       }
     });
 
+    // Direct canvas mousedown for 100% reliable physical creature reactivity
+    this.canvas.addEventListener('mousedown', (e) => {
+      const drawer = document.getElementById('worlds-drawer');
+      if (drawer && drawer.classList.contains('open')) {
+        this.closeDrawer();
+        return;
+      }
+      this.mouse.down = true;
+      this.mouse.button = e.button === 2 ? 2 : 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.mouse.x = e.clientX * dpr;
+      this.mouse.y = e.clientY * dpr;
+      if (ring) ring.classList.add('active');
+    });
+
     window.addEventListener('mousedown', (e) => {
-      if (e.target.closest('#topbar') || e.target.closest('#inspector') || e.target.closest('#worlds-drawer') || e.target.closest('.modal-overlay')) return;
+      // Do not trigger canvas interaction if clicking on UI chrome
+      if (e.target.closest('#topbar') || e.target.closest('#inspector') || e.target.closest('#worlds-drawer') || e.target.closest('.modal-overlay')) {
+        return;
+      }
+      // If drawer is open and clicked on background, close drawer
+      const drawer = document.getElementById('worlds-drawer');
+      if (drawer && drawer.classList.contains('open') && !e.target.closest('#worlds-drawer') && !e.target.closest('#btn-hamburger')) {
+        this.closeDrawer();
+        return;
+      }
       this.mouse.down = true;
       this.mouse.button = e.button === 2 ? 2 : 1;
       if (ring) ring.classList.add('active');
@@ -2769,7 +2887,7 @@ class VantaStudioApp {
       }
     });
 
-    // Keyboard Shortcuts
+    // Keyboard Shortcuts (Standard studio transport & digits 1-9, 0)
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT') return;
       if (e.code === 'Space') {
@@ -2797,12 +2915,6 @@ class VantaStudioApp {
         if (WORLDS[idx]) this.switchWorld(WORLDS[idx].id);
       } else if (e.code === 'Digit0') {
         if (WORLDS[9]) this.switchWorld(WORLDS[9].id);
-      } else if (e.code === 'Minus') {
-        if (WORLDS[10]) this.switchWorld(WORLDS[10].id);
-      } else if (e.code === 'Equal') {
-        if (WORLDS[11]) this.switchWorld(WORLDS[11].id);
-      } else if (e.code === 'Backspace') {
-        if (WORLDS[12]) this.switchWorld(WORLDS[12].id);
       }
     });
   }
@@ -2817,9 +2929,12 @@ class VantaStudioApp {
     document.getElementById('drawer-backdrop').addEventListener('click', () => {
       this.closeDrawer();
     });
-    document.getElementById('active-world-pill').addEventListener('click', () => {
-      this.toggleDrawer();
-    });
+    const pill = document.getElementById('active-world-pill');
+    if (pill) {
+      pill.addEventListener('click', () => {
+        this.toggleDrawer();
+      });
+    }
 
     document.querySelectorAll('.cat-pill').forEach(pill => {
       pill.addEventListener('click', () => {
