@@ -189,6 +189,22 @@ const WORLDS = [
   }
 ];
 
+const WORLD_ICONS = {
+  particle_life: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="6" cy="7" r="1.5"></circle><circle cx="18" cy="8" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle><path d="M12 4a8 8 0 0 1 8 8M4 12a8 8 0 0 1 8-8M12 20a8 8 0 0 1-8-8"></path></svg>',
+  physarum: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-8m0 0l-5-5m5 5l5-5m-5-3V3m-5 3L4 3m3 3l2 2m5-5l3-3m-3 3l-2 2"></path></svg>',
+  cosmic_gravity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"></ellipse><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(45 12 12)"></ellipse></svg>',
+  boids_swarm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l4-2-2 4 5-3M11 6l4-2-2 4 5-3M13 18l4-2-2 4 5-3"></path></svg>',
+  quantum_wave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2.5-6 4-6 6.5 0s4 6 6.5 0 4-6 7 0"></path><line x1="2" y1="12" x2="22" y2="12" stroke-dasharray="2 2"></line></svg>',
+  crystal_growth: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M5.6 18.4L18.4 5.6M9 4l3 3 3-3M9 20l3-3 3 3M4 9l3 3-3 3M20 9l-3 3 3 3"></path></svg>',
+  flow_field: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8c4-2 8-2 12 1s4 7 1 9-7 0-6-3 3-5 5-3"></path><path d="M3 14c3-1 6-1 8 1"></path></svg>',
+  reaction_diffusion: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"></circle><circle cx="16" cy="8" r="2"></circle><circle cx="14" cy="16" r="3.5"></circle><circle cx="7" cy="16" r="2"></circle></svg>',
+  lenia: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5" stroke-dasharray="2 2"></circle><circle cx="12" cy="12" r="2"></circle></svg>',
+  ferrofluid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 19h18M6 19l2-8 2 8 2-12 2 12 2-8 2 8"></path></svg>',
+  fractal_growth: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21v-6m0-3V6m0 6l-4-4m0 0l-3 1m3-1V5m4 7l4-4m0 0l3 1m-3-1V5"></path></svg>',
+  excitable_medium: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12a2 2 0 0 1 2 2c0 2-2 4-4 4s-6-3-6-6 4-8 8-8 10 5 10 10"></path></svg>',
+  thermal_convection: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M4 5h16M7 16a3 3 0 0 1-3-3v-2a3 3 0 0 1 6 0v2a3 3 0 0 1-3 3zm10 0a3 3 0 0 1-3-3v-2a3 3 0 0 1 6 0v2a3 3 0 0 1-3 3z"></path></svg>'
+};
+
 /* ========================================================================= */
 /* 1. Particle Life Engine (Primordial Biogenesis)                          */
 /* ========================================================================= */
@@ -2731,10 +2747,18 @@ class VantaStudioApp {
 
   // Cinematic World Switching with Portal Loader
   switchWorld(targetWorldId) {
-    if (targetWorldId === this.activeEngineId) return;
+    if (targetWorldId === this.activeEngineId) {
+      this.closeDrawer();
+      return;
+    }
 
     const targetWorld = WORLDS.find(w => w.id === targetWorldId);
     if (!targetWorld) return;
+
+    // If currently filtered by a category that excludes this world, reset category to 'all' so it is visible
+    if (this.activeDrawerCategory && this.activeDrawerCategory !== 'all' && targetWorld.category !== this.activeDrawerCategory) {
+      this.activeDrawerCategory = 'all';
+    }
 
     const loader = document.getElementById('world-loader');
     const title = document.getElementById('loader-title');
@@ -2769,19 +2793,42 @@ class VantaStudioApp {
 
   toggleDrawer() {
     const drawer = document.getElementById('worlds-drawer');
-    const backdrop = document.getElementById('drawer-backdrop');
-    const btn = document.getElementById('btn-hamburger');
-    const isOpen = drawer.classList.contains('open');
+    const isOpen = drawer && drawer.classList.contains('open');
 
     if (isOpen) {
-      drawer.classList.remove('open');
-      backdrop.classList.remove('open');
-      btn.classList.remove('active');
+      this.closeDrawer();
     } else {
-      drawer.classList.add('open');
-      backdrop.classList.add('open');
-      btn.classList.add('active');
+      this.openDrawer();
     }
+  }
+
+  openDrawer() {
+    const drawer = document.getElementById('worlds-drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+    const btn = document.getElementById('btn-hamburger');
+
+    // Auto-sync category: if active world is not in current category filter, reset to 'all'
+    const curWorld = WORLDS.find(w => w.id === this.activeEngineId);
+    if (curWorld && this.activeDrawerCategory && this.activeDrawerCategory !== 'all' && curWorld.category !== this.activeDrawerCategory) {
+      this.activeDrawerCategory = 'all';
+    }
+
+    this.renderWorldsDrawer();
+
+    if (drawer) drawer.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+    if (btn) btn.classList.add('active');
+
+    // Auto-scroll to active world card smoothly
+    setTimeout(() => {
+      const list = document.getElementById('worlds-list');
+      if (list) {
+        const activeCard = list.querySelector('.world-card.active');
+        if (activeCard) {
+          activeCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+    }, 60);
   }
 
   closeDrawer() {
@@ -2816,29 +2863,33 @@ class VantaStudioApp {
       const isActive = (world.id === this.activeEngineId);
       const card = document.createElement('div');
       card.className = `world-card ${isActive ? 'active' : ''}`;
+      card.setAttribute('data-world-id', world.id);
+
+      const iconSvg = WORLD_ICONS[world.id] || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>';
+
       card.innerHTML = `
         <div class="world-card-top">
           <div class="world-card-title-group">
             <div class="world-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <circle cx="12" cy="12" r="4"></circle>
-              </svg>
+              ${iconSvg}
             </div>
-            <div>
-              <div class="world-card-title">${world.name}</div>
-            </div>
+            <div class="world-card-title">${world.name}</div>
           </div>
           <div class="world-card-badges">
             ${isActive ? '<span class="world-active-pill">ACTIVE</span>' : ''}
-            <span class="world-card-badge">${world.badge}</span>
+            <span class="world-card-cat-badge">${world.category.toUpperCase()}</span>
           </div>
+        </div>
+        <div class="world-card-subrow">
+          <span class="world-archetype-tag">${world.badge}</span>
+          <span class="world-domain-tag">${world.tag}</span>
         </div>
         <p class="world-card-desc">${world.desc}</p>
         <div class="world-card-meta">
-          <span>${world.tag.toUpperCase()}</span>
-          <span>•</span>
-          <span>${world.physics}</span>
+          <svg class="meta-formula-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6h16M4 12h10M4 18h14"></path>
+          </svg>
+          <span class="world-physics-formula">${world.physics}</span>
         </div>
       `;
 
@@ -2956,9 +3007,8 @@ class VantaStudioApp {
     }
 
     document.querySelectorAll('.cat-pill').forEach(pill => {
-      pill.addEventListener('click', () => {
-        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.renderWorldsDrawer(pill.dataset.cat);
       });
     });
