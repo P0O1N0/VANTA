@@ -154,17 +154,34 @@ canvas#simCanvas {
   font-family: var(--font-mono);
 }
 
-/* Engine Navigation Tabs */
+/* Engine Navigation Tabs with Ramotion Sliding Pill & Spring Animation */
 .engine-tabs {
+  position: relative;
   display: flex;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.35);
   padding: 4px;
   border-radius: 10px;
   border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.tab-indicator-pill {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, var(--accent-purple), #5e11a3);
+  box-shadow: 0 0 16px var(--accent-purple-glow);
+  border-radius: 7px;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .engine-tab {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -176,25 +193,40 @@ canvas#simCanvas {
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 0.2s, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .engine-tab svg {
   width: 15px;
   height: 15px;
   stroke: currentColor;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .engine-tab:hover {
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.06);
+}
+
+.engine-tab:hover svg {
+  transform: scale(1.1);
 }
 
 .engine-tab.active {
   color: #fff;
-  background: linear-gradient(135deg, var(--accent-purple), #5e11a3);
-  box-shadow: 0 0 14px var(--accent-purple-glow);
   font-weight: 600;
+}
+
+.engine-tab.active svg {
+  animation: icon-bounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: var(--accent-cyan);
+  filter: drop-shadow(0 0 6px var(--accent-cyan-glow));
+}
+
+@keyframes icon-bounce {
+  0% { transform: scale(1); }
+  35% { transform: scale(0.78) rotate(-10deg); }
+  70% { transform: scale(1.22) rotate(6deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 
 /* Controls Group */

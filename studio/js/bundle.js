@@ -1,6 +1,7 @@
 /**
  * VANTA Studio — Complete Standalone High-Performance Simulation Engine & UI
- * 100% Offline, Zero Server Dependency, Pure English Creative Studio.
+ * Zero Server Dependency, Hardware-Accelerated Blit Shaders, Ramotion Animated Tab Bar,
+ * Dynamic Sliders, and Environmental Dynamics.
  */
 
 // Color Palettes
@@ -58,14 +59,14 @@ class ParticleLifeEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.numParticles = 2400;
+    this.numParticles = 1600;
     this.numSpecies = 5;
-    this.rMax = 80;
+    this.rMax = 75;
     this.rMin = 14;
-    this.friction = 0.86;
+    this.friction = 0.88;
     this.forceFactor = 1.0;
-    this.maxVelocity = 8.5;
-    this.trailFade = 0.92;
+    this.maxVelocity = 8.0;
+    this.trailFade = 0.90;
     this.pointSize = 2.4;
 
     this.x = new Float32Array(this.numParticles);
@@ -108,20 +109,18 @@ class ParticleLifeEngine {
     const N = this.numParticles;
     const rMax = this.rMax;
     const rMin = this.rMin;
-    const rDiff = rMax - rMin;
+    const rDiff = Math.max(rMax - rMin, 1);
 
-    // Environmental Influences
     const o2 = env ? env.oxygen : 1.0;
     const temp = env ? env.temperature : 24.0;
     const visc = env ? env.viscosity : 0.05;
     const grav = env ? env.gravity : 0.0;
 
-    // Thermal agitation factor
-    const thermalJitter = Math.max((temp - 4.0) / 40.0, 0.0) * 12.0;
-    const effectiveFriction = Math.max(0.4, (this.friction - visc * 0.8));
+    const thermalJitter = Math.max((temp - 4.0) / 40.0, 0.0) * 10.0;
+    const effectiveFriction = Math.max(0.4, (this.friction - visc * 0.7));
 
-    // Spatial Grid Partitioning
-    const cellSize = Math.max(rMax, 20);
+    // Spatial hash grid
+    const cellSize = Math.max(rMax, 25);
     const gridW = Math.max(Math.floor(w / cellSize), 1);
     const gridH = Math.max(Math.floor(h / cellSize), 1);
     const grid = new Array(gridW * gridH);
@@ -133,7 +132,7 @@ class ParticleLifeEngine {
       grid[gy * gridW + gx].push(i);
     }
 
-    // Force Evaluation
+    // Force evaluation
     for (let i = 0; i < N; i++) {
       let fx = 0;
       let fy = grav * 80.0;
@@ -181,13 +180,11 @@ class ParticleLifeEngine {
         }
       }
 
-      // Thermal agitation (Brownian motion)
       if (thermalJitter > 0) {
         fx += (Math.random() - 0.5) * thermalJitter;
         fy += (Math.random() - 0.5) * thermalJitter;
       }
 
-      // Interactive Mouse manipulation
       if (mouse && mouse.down) {
         let mdx = mouse.x - xi;
         let mdy = mouse.y - yi;
@@ -203,7 +200,6 @@ class ParticleLifeEngine {
       this.vx[i] = (this.vx[i] + fx * this.forceFactor * dt * 45.0) * effectiveFriction;
       this.vy[i] = (this.vy[i] + fy * this.forceFactor * dt * 45.0) * effectiveFriction;
 
-      // Speed clamping based on oxygen
       const maxSpd = this.maxVelocity * (0.4 + o2 * 0.6);
       const curSpd = Math.sqrt(this.vx[i] * this.vx[i] + this.vy[i] * this.vy[i]);
       if (curSpd > maxSpd) {
@@ -222,7 +218,6 @@ class ParticleLifeEngine {
     const w = this.canvas.width;
     const h = this.canvas.height;
 
-    // Semi-transparent backdrop fade for smooth motion trails
     ctx.fillStyle = `rgba(6, 8, 14, ${1.0 - this.trailFade})`;
     ctx.fillRect(0, 0, w, h);
 
@@ -237,26 +232,30 @@ class ParticleLifeEngine {
 }
 
 /* ========================================================================= */
-/* 2. Physarum Slime Mold Engine                                             */
+/* 2. Physarum Slime Mold Engine (Hardware-Accelerated Bilinear Blit)         */
 /* ========================================================================= */
 class PhysarumEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.numAgents = 32000;
+    this.numAgents = 22000;
     this.sensorAngle = 0.45;
-    this.sensorDist = 12.0;
+    this.sensorDist = 9.0;
     this.turnSpeed = 0.35;
-    this.moveSpeed = 1.8;
+    this.moveSpeed = 1.6;
     this.decayFactor = 0.94;
     this.depositAmount = 5.0;
 
-    this.scale = 2; // Trail grid scale
-    this.gridW = 0;
-    this.gridH = 0;
-    this.trailMap = null;
-    this.displayBuffer = null;
+    // Fixed internal simulation grid (320x200 = 64,000 pixels)
+    this.gridW = 320;
+    this.gridH = 200;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
 
+    this.trailMap = new Float32Array(this.gridW * this.gridH);
     this.agentX = new Float32Array(this.numAgents);
     this.agentY = new Float32Array(this.numAgents);
     this.agentAngle = new Float32Array(this.numAgents);
@@ -266,29 +265,24 @@ class PhysarumEngine {
   }
 
   init() {
-    const w = this.canvas.width || 1200;
-    const h = this.canvas.height || 800;
-    this.gridW = Math.max(Math.floor(w / this.scale), 1);
-    this.gridH = Math.max(Math.floor(h / this.scale), 1);
-    this.trailMap = new Float32Array(this.gridW * this.gridH);
-    this.displayBuffer = this.ctx.createImageData(w, h);
+    const gw = this.gridW;
+    const gh = this.gridH;
+    this.trailMap.fill(0);
 
-    const centerX = w * 0.5;
-    const centerY = h * 0.5;
-    const spawnRad = Math.min(w, h) * 0.35;
+    const centerX = gw * 0.5;
+    const centerY = gh * 0.5;
+    const spawnRad = Math.min(gw, gh) * 0.38;
 
     for (let i = 0; i < this.numAgents; i++) {
       const theta = Math.random() * 6.28318;
       const r = Math.sqrt(Math.random()) * spawnRad;
       this.agentX[i] = centerX + Math.cos(theta) * r;
       this.agentY[i] = centerY + Math.sin(theta) * r;
-      this.agentAngle[i] = theta + Math.PI; // Face inward initially
+      this.agentAngle[i] = theta + Math.PI;
     }
   }
 
   step(dt = 0.016, mouse = null, env = null) {
-    const w = this.canvas.width;
-    const h = this.canvas.height;
     const gw = this.gridW;
     const gh = this.gridH;
     const trail = this.trailMap;
@@ -298,23 +292,20 @@ class PhysarumEngine {
     const visc = env ? env.viscosity : 0.05;
     const grav = env ? env.gravity : 0.0;
 
-    // Environmental modulation
     const curDecay = Math.min(0.98, this.decayFactor - (temp - 24.0) * 0.001);
     const curDeposit = this.depositAmount * (0.5 + o2 * 0.5);
     const curSpeed = this.moveSpeed * (1.0 - visc * 1.5);
-
     const sDist = this.sensorDist;
     const sAngle = this.sensorAngle;
 
     const sampleTrail = (x, y) => {
-      let gx = Math.floor(x / this.scale);
-      let gy = Math.floor(y / this.scale);
+      let gx = Math.floor(x);
+      let gy = Math.floor(y);
       gx = (gx % gw + gw) % gw;
       gy = (gy % gh + gh) % gh;
       return trail[gy * gw + gx];
     };
 
-    // Agent Sensing & Movement
     for (let i = 0; i < this.numAgents; i++) {
       const a = this.agentAngle[i];
       const x = this.agentX[i];
@@ -334,7 +325,7 @@ class PhysarumEngine {
 
       let steer = 0;
       if (fVal > lVal && fVal > rVal) {
-        // Forward is highest
+        // Continue forward
       } else if (fVal < lVal && fVal < rVal) {
         steer = (Math.random() < 0.5 ? 1 : -1) * this.turnSpeed;
       } else if (lVal > rVal) {
@@ -345,75 +336,67 @@ class PhysarumEngine {
 
       this.agentAngle[i] += steer;
 
-      // Mouse interactive attract / repel
       if (mouse && mouse.down) {
-        const dx = mouse.x - x;
-        const dy = mouse.y - y;
-        if (dx * dx + dy * dy < 100000) {
+        const mx = (mouse.x / this.canvas.width) * gw;
+        const my = (mouse.y / this.canvas.height) * gh;
+        const dx = mx - x;
+        const dy = my - y;
+        if (dx * dx + dy * dy < 3500) {
           const targetAngle = Math.atan2(dy, dx);
-          this.agentAngle[i] += (mouse.button === 2 ? -1 : 1) * (targetAngle - this.agentAngle[i]) * 0.1;
+          this.agentAngle[i] += (mouse.button === 2 ? -1 : 1) * (targetAngle - this.agentAngle[i]) * 0.15;
         }
       }
 
       let nx = x + Math.cos(this.agentAngle[i]) * curSpeed;
-      let ny = y + Math.sin(this.agentAngle[i]) * curSpeed + grav * 0.8;
+      let ny = y + Math.sin(this.agentAngle[i]) * curSpeed + grav * 0.6;
 
-      this.agentX[i] = (nx % w + w) % w;
-      this.agentY[i] = (ny % h + h) % h;
+      this.agentX[i] = (nx % gw + gw) % gw;
+      this.agentY[i] = (ny % gh + gh) % gh;
 
-      // Deposit trail
-      const dgx = Math.min(Math.max(Math.floor(this.agentX[i] / this.scale), 0), gw - 1);
-      const dgy = Math.min(Math.max(Math.floor(this.agentY[i] / this.scale), 0), gh - 1);
+      const dgx = Math.min(Math.max(Math.floor(this.agentX[i]), 0), gw - 1);
+      const dgy = Math.min(Math.max(Math.floor(this.agentY[i]), 0), gh - 1);
       trail[dgy * gw + dgx] = Math.min(trail[dgy * gw + dgx] + curDeposit, 255);
     }
 
-    // Diffusion & Evaporation pass
     for (let i = 0; i < trail.length; i++) {
       trail[i] *= curDecay;
     }
   }
 
   render() {
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const gw = this.gridW;
-    const gh = this.gridH;
     const trail = this.trailMap;
-    const imgData = this.ctx.getImageData(0, 0, w, h);
-    const data = imgData.data;
+    const data = this.offImgData.data;
     const pal = this.palette;
 
-    for (let y = 0; y < h; y++) {
-      const gy = Math.floor(y / this.scale);
-      const rowIdx = y * w * 4;
-      const gRowIdx = gy * gw;
+    let pIdx = 0;
+    for (let i = 0; i < trail.length; i++) {
+      const val = Math.min(trail[i] / 40.0, 1.0);
+      if (val <= 0.01) {
+        data[pIdx] = pal[0][0];
+        data[pIdx + 1] = pal[0][1];
+        data[pIdx + 2] = pal[0][2];
+        data[pIdx + 3] = 255;
+      } else {
+        const t = val * 3.0;
+        const idx = Math.min(Math.floor(t), 2);
+        const frac = t - idx;
+        const c1 = pal[idx];
+        const c2 = pal[idx + 1];
 
-      for (let x = 0; x < w; x++) {
-        const gx = Math.floor(x / this.scale);
-        const val = Math.min(trail[gRowIdx + gx] / 40.0, 1.0);
-        const pIdx = rowIdx + x * 4;
-
-        if (val <= 0.01) {
-          data[pIdx] = pal[0][0];
-          data[pIdx + 1] = pal[0][1];
-          data[pIdx + 2] = pal[0][2];
-          data[pIdx + 3] = 255;
-        } else {
-          const t = val * 3;
-          const idx = Math.min(Math.floor(t), 2);
-          const frac = t - idx;
-          const c1 = pal[idx];
-          const c2 = pal[idx + 1];
-
-          data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
-          data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
-          data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
-          data[pIdx + 3] = 255;
-        }
+        data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
+        data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
+        data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+        data[pIdx + 3] = 255;
       }
+      pIdx += 4;
     }
 
-    this.ctx.putImageData(imgData, 0, 0);
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+
+    // Hardware accelerated GPU bilinear blit
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = 'high';
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
   }
 }
 
@@ -424,7 +407,7 @@ class FlowFieldEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.numParticles = 12000;
+    this.numParticles = 7500;
     this.trailLength = 0.94;
     this.noiseScale = 0.0035;
     this.noiseSpeed = 0.2;
@@ -455,13 +438,6 @@ class FlowFieldEngine {
     }
   }
 
-  pseudoNoise(x, y, t) {
-    const s = 12.9898;
-    const s2 = 78.233;
-    const val = Math.sin(x * s + y * s2 + t) * 43758.5453;
-    return val - Math.floor(val);
-  }
-
   step(dt = 0.016, mouse = null, env = null) {
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -484,12 +460,10 @@ class FlowFieldEngine {
       const nx = this.x[i] * nScale;
       const ny = this.y[i] * nScale;
 
-      // Analytical curl field derivation
       const angle = (Math.sin(nx * 3.0 + t) + Math.cos(ny * 3.0 - t)) * Math.PI * 2.0;
       let vx = Math.cos(angle) * spd;
       let vy = (Math.sin(angle) * spd) + grav * 1.5;
 
-      // Interactive mouse swirl vortex
       if (mouse && mouse.down) {
         const mdx = mouse.x - this.x[i];
         const mdy = mouse.y - this.y[i];
@@ -506,7 +480,6 @@ class FlowFieldEngine {
       this.y[i] += vy;
       this.age[i]++;
 
-      // Respawn or torus wrap
       if (this.age[i] > this.maxAge[i] || this.x[i] < 0 || this.x[i] >= w || this.y[i] < 0 || this.y[i] >= h) {
         this.x[i] = Math.random() * w;
         this.y[i] = Math.random() * h;
@@ -527,8 +500,7 @@ class FlowFieldEngine {
 
     ctx.lineWidth = 1.4;
     const pal = this.palette;
-    const strokeColor = `rgb(${pal[2][0]}, ${pal[2][1]}, ${pal[2][2]})`;
-    ctx.strokeStyle = strokeColor;
+    ctx.strokeStyle = `rgb(${pal[2][0]}, ${pal[2][1]}, ${pal[2][2]})`;
 
     ctx.beginPath();
     for (let i = 0; i < this.numParticles; i++) {
@@ -544,49 +516,41 @@ class FlowFieldEngine {
 }
 
 /* ========================================================================= */
-/* 4. Gray-Scott Reaction-Diffusion Engine                                   */
+/* 4. Gray-Scott Reaction-Diffusion Engine (Hardware-Accelerated Blit)       */
 /* ========================================================================= */
 class ReactionDiffusionEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.scale = 3;
-    this.gridW = 0;
-    this.gridH = 0;
+    this.gridW = 240;
+    this.gridH = 150;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
 
     this.feed = 0.0545;
     this.kill = 0.0620;
     this.diffU = 1.0;
     this.diffV = 0.5;
-    this.substeps = 8;
+    this.substeps = 5;
 
-    this.u = null;
-    this.v = null;
-    this.nextU = null;
-    this.nextV = null;
+    const size = this.gridW * this.gridH;
+    this.u = new Float32Array(size);
+    this.v = new Float32Array(size);
+    this.nextU = new Float32Array(size);
+    this.nextV = new Float32Array(size);
 
     this.palette = PALETTES.spectral_velvet;
     this.init();
   }
 
   init() {
-    const w = this.canvas.width || 1200;
-    const h = this.canvas.height || 800;
-    this.gridW = Math.max(Math.floor(w / this.scale), 1);
-    this.gridH = Math.max(Math.floor(h / this.scale), 1);
     const size = this.gridW * this.gridH;
+    this.u.fill(1.0);
+    this.v.fill(0.0);
 
-    this.u = new Float32Array(size);
-    this.v = new Float32Array(size);
-    this.nextU = new Float32Array(size);
-    this.nextV = new Float32Array(size);
-
-    for (let i = 0; i < size; i++) {
-      this.u[i] = 1.0;
-      this.v[i] = 0.0;
-    }
-
-    // Seed localized morphogenetic triggers
     const gw = this.gridW;
     const gh = this.gridH;
     const seedCenters = [
@@ -596,8 +560,8 @@ class ReactionDiffusionEngine {
     ];
 
     seedCenters.forEach(([cx, cy]) => {
-      for (let y = cy - 8; y <= cy + 8; y++) {
-        for (let x = cx - 8; x <= cx + 8; x++) {
+      for (let y = cy - 6; y <= cy + 6; y++) {
+        for (let x = cx - 6; x <= cx + 6; x++) {
           if (x >= 0 && x < gw && y >= 0 && y < gh) {
             const idx = y * gw + x;
             this.u[idx] = 0.5 + Math.random() * 0.1;
@@ -636,7 +600,6 @@ class ReactionDiffusionEngine {
           const uVal = u[idx];
           const vVal = v[idx];
 
-          // 9-point Laplacian convolution
           const lapU = (
             u[rowUp + x] + u[rowDown + x] + u[row + x - 1] + u[row + x + 1]
           ) * 0.2 + (
@@ -655,18 +618,17 @@ class ReactionDiffusionEngine {
         }
       }
 
-      // Interactive mouse injection
       if (mouse && mouse.down) {
-        const mx = Math.floor(mouse.x / this.scale);
-        const my = Math.floor(mouse.y / this.scale);
-        for (let dy = -6; dy <= 6; dy++) {
-          for (let dx = -6; dx <= 6; dx++) {
+        const mx = Math.floor((mouse.x / this.canvas.width) * gw);
+        const my = Math.floor((mouse.y / this.canvas.height) * gh);
+        for (let dy = -4; dy <= 4; dy++) {
+          for (let dx = -4; dx <= 4; dx++) {
             const px = mx + dx;
             const py = my + dy;
             if (px >= 1 && px < gw - 1 && py >= 1 && py < gh - 1) {
               const pIdx = py * gw + px;
               nu[pIdx] = 0.4;
-              nv[pIdx] = 0.5;
+              nv[pIdx] = 0.6;
             }
           }
         }
@@ -678,43 +640,37 @@ class ReactionDiffusionEngine {
   }
 
   render() {
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const gw = this.gridW;
     const v = this.v;
-    const imgData = this.ctx.getImageData(0, 0, w, h);
-    const data = imgData.data;
+    const data = this.offImgData.data;
     const pal = this.palette;
 
-    for (let y = 0; y < h; y++) {
-      const gy = Math.floor(y / this.scale);
-      const rowIdx = y * w * 4;
-      const gRowIdx = gy * gw;
+    let pIdx = 0;
+    for (let i = 0; i < v.length; i++) {
+      const val = Math.min(Math.max(v[i] * 2.8, 0.0), 1.0);
+      const t = val * 3.0;
+      const idx = Math.min(Math.floor(t), 2);
+      const frac = t - idx;
+      const c1 = pal[idx];
+      const c2 = pal[idx + 1];
 
-      for (let x = 0; x < w; x++) {
-        const gx = Math.floor(x / this.scale);
-        const val = Math.min(Math.max(v[gRowIdx + gx] * 2.8, 0.0), 1.0);
-        const pIdx = rowIdx + x * 4;
-
-        const t = val * 3.0;
-        const idx = Math.min(Math.floor(t), 2);
-        const frac = t - idx;
-        const c1 = pal[idx];
-        const c2 = pal[idx + 1];
-
-        data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
-        data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
-        data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
-        data[pIdx + 3] = 255;
-      }
+      data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
+      data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
+      data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+      data[pIdx + 3] = 255;
+      pIdx += 4;
     }
 
-    this.ctx.putImageData(imgData, 0, 0);
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+
+    // Hardware accelerated GPU bilinear blit
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = 'high';
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
   }
 }
 
 /* ========================================================================= */
-/* Curated Simulation Presets                                               */
+/* Curated Presets                                                          */
 /* ========================================================================= */
 const PRESETS = [
   {
@@ -722,56 +678,56 @@ const PRESETS = [
     engine: "particle_life",
     name: "Primordial Soup",
     desc: "Chaotic early-universe cellular symbiosis with balanced multi-species clustering.",
-    params: { rMax: 90, rMin: 15, friction: 0.86, particles: 2400 }
+    params: { rMax: 85, rMin: 14, friction: 0.88, particles: 1600 }
   },
   {
     id: "planetary_rings",
     engine: "particle_life",
     name: "Cosmic Orbital Ring",
     desc: "Vortical planetary accretion disk with orbital friction and species clustering.",
-    params: { rMax: 110, rMin: 22, friction: 0.92, particles: 3000 }
+    params: { rMax: 100, rMin: 20, friction: 0.92, particles: 2200 }
   },
   {
     id: "crystalline_lattice",
     engine: "particle_life",
     name: "Crystalline Geometry",
     desc: "Quasi-crystal lattices formed by strong localized inter-particle repulsion.",
-    params: { rMax: 65, rMin: 28, friction: 0.78, particles: 1800 }
+    params: { rMax: 65, rMin: 26, friction: 0.78, particles: 1200 }
   },
   {
     id: "slime_vascular",
     engine: "physarum",
     name: "Vascular Venation",
     desc: "Interconnected transport network resembling bio-vascular leaf venation.",
-    params: { sensorAngle: 0.45, sensorDist: 14.0, turnSpeed: 0.35, decay: 0.95 }
+    params: { sensorAngle: 0.45, sensorDist: 10.0, turnSpeed: 0.35, decay: 0.95 }
   },
   {
     id: "neural_connectome",
     engine: "physarum",
     name: "Neural Connectome",
     desc: "High-density dendritic filaments forming cognitive synaptic highways.",
-    params: { sensorAngle: 0.30, sensorDist: 22.0, turnSpeed: 0.50, decay: 0.92 }
+    params: { sensorAngle: 0.30, sensorDist: 18.0, turnSpeed: 0.50, decay: 0.92 }
   },
   {
     id: "oceanic_turbulence",
     engine: "flow_field",
     name: "Oceanic Vortices",
     desc: "Divergence-free fluid flow lines tracing deep oceanic atmospheric currents.",
-    params: { speed: 2.4, noiseScale: 0.003, trail: 0.95 }
+    params: { speed: 2.4, noiseScale: 0.0035, trail: 0.94 }
   },
   {
     id: "turing_coral",
     engine: "reaction_diffusion",
     name: "Turing Reef Coral",
     desc: "Labyrinthine Turing patterns and bio-calcification morphogenetic growth.",
-    params: { feed: 0.0545, kill: 0.0620, substeps: 8 }
+    params: { feed: 0.0545, kill: 0.0620, substeps: 5 }
   },
   {
     id: "solitary_soliton",
     engine: "reaction_diffusion",
     name: "Soliton Wave Pulses",
     desc: "Traveling solitary wave pulses maintaining coherence in low-feed substrates.",
-    params: { feed: 0.0300, kill: 0.0620, substeps: 7 }
+    params: { feed: 0.0300, kill: 0.0620, substeps: 5 }
   }
 ];
 
@@ -787,7 +743,6 @@ class VantaStudioApp {
 
     this.mouse = { x: 0, y: 0, down: false, button: 1 };
 
-    // Environmental Parameters State
     this.environment = {
       oxygen: 1.0,     // 0.0 - 2.0 (100%)
       temperature: 24, // -10 - 80 (°C)
@@ -820,6 +775,12 @@ class VantaStudioApp {
     this.initUI();
     this.initMouseInteractions();
     this.renderInspector();
+
+    // Position initial Ramotion Tab Pill
+    requestAnimationFrame(() => {
+      const activeTab = document.querySelector('.engine-tab.active');
+      if (activeTab) this.updateTabPill(activeTab);
+    });
 
     requestAnimationFrame((t) => this.loop(t));
   }
@@ -875,7 +836,7 @@ class VantaStudioApp {
       particle_life: "Particle Life",
       physarum: "Physarum Polycephalum",
       flow_field: "Curl-Noise Flow",
-      reaction_diffusion: "Reaction-Diffusion (Gray-Scott)"
+      reaction_diffusion: "Reaction-Diffusion"
     };
     if (engVal) engVal.innerText = engineNames[this.activeEngineId] || this.activeEngineId;
 
@@ -886,6 +847,31 @@ class VantaStudioApp {
       else if (this.activeEngine.gridW) count = this.activeEngine.gridW * this.activeEngine.gridH;
       entVal.innerText = count.toLocaleString();
     }
+  }
+
+  updateTabPill(tab) {
+    const pill = document.getElementById('tab-pill');
+    if (!pill || !tab) return;
+    const nav = document.getElementById('engine-tabs-nav');
+    const navRect = nav.getBoundingClientRect();
+    const tabRect = tab.getBoundingClientRect();
+    pill.style.width = `${tabRect.width}px`;
+    pill.style.transform = `translateX(${tabRect.left - navRect.left - 4}px)`;
+  }
+
+  setupSlider(id, onInput) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const update = () => {
+      const min = parseFloat(el.min) || 0;
+      const max = parseFloat(el.max) || 100;
+      const val = parseFloat(el.value);
+      const pct = Math.min(Math.max(((val - min) / (max - min)) * 100, 0), 100);
+      el.style.background = `linear-gradient(to right, var(--accent-purple) 0%, var(--accent-purple) ${pct}%, rgba(255,255,255,0.12) ${pct}%, rgba(255,255,255,0.12) 100%)`;
+      if (onInput) onInput(val, el);
+    };
+    el.addEventListener('input', update);
+    update();
   }
 
   initMouseInteractions() {
@@ -933,16 +919,25 @@ class VantaStudioApp {
         document.getElementById('btn-seed').click();
       } else if (e.code === 'KeyP') {
         document.getElementById('btn-presets').click();
+      } else if (e.code === 'Digit1') {
+        document.querySelector('.engine-tab[data-engine="particle_life"]').click();
+      } else if (e.code === 'Digit2') {
+        document.querySelector('.engine-tab[data-engine="physarum"]').click();
+      } else if (e.code === 'Digit3') {
+        document.querySelector('.engine-tab[data-engine="flow_field"]').click();
+      } else if (e.code === 'Digit4') {
+        document.querySelector('.engine-tab[data-engine="reaction_diffusion"]').click();
       }
     });
   }
 
   initUI() {
-    // Engine Tab Switching
+    // Engine Tab Switching with Ramotion Pill Animation
     document.querySelectorAll('.engine-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.engine-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
+        this.updateTabPill(tab);
         this.activeEngineId = tab.dataset.engine;
         this.activeEngine.init();
         this.renderInspector();
@@ -983,9 +978,9 @@ class VantaStudioApp {
     });
 
     // Speed Slider
-    document.getElementById('speedSlider').addEventListener('input', (e) => {
-      this.simSpeed = parseFloat(e.target.value);
-      document.getElementById('speedValue').innerText = `${this.simSpeed.toFixed(1)}x`;
+    this.setupSlider('speedSlider', (val) => {
+      this.simSpeed = val;
+      document.getElementById('speedValue').innerText = `${val.toFixed(1)}x`;
     });
 
     // Theme Toggle
@@ -1000,31 +995,23 @@ class VantaStudioApp {
       inspector.classList.toggle('collapsed');
     });
 
-    // Environmental Controls Bindings
-    const oxygenSlider = document.getElementById('envOxygen');
-    oxygenSlider.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
+    // Environmental Sliders with live gradient fill
+    this.setupSlider('envOxygen', (val) => {
       this.environment.oxygen = val / 100.0;
-      document.getElementById('envOxygenVal').innerText = `${val}%`;
+      document.getElementById('envOxygenVal').innerText = `${Math.round(val)}%`;
     });
 
-    const tempSlider = document.getElementById('envTemp');
-    tempSlider.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
+    this.setupSlider('envTemp', (val) => {
       this.environment.temperature = val;
-      document.getElementById('envTempVal').innerText = `${val}°C`;
+      document.getElementById('envTempVal').innerText = `${Math.round(val)}°C`;
     });
 
-    const viscSlider = document.getElementById('envViscosity');
-    viscSlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
+    this.setupSlider('envViscosity', (val) => {
       this.environment.viscosity = val;
       document.getElementById('envViscosityVal').innerText = val.toFixed(2);
     });
 
-    const gravSlider = document.getElementById('envGravity');
-    gravSlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
+    this.setupSlider('envGravity', (val) => {
       this.environment.gravity = val;
       let label = "Zero-G";
       if (val > 0.05) label = `+${val.toFixed(1)}g (Down)`;
@@ -1076,7 +1063,7 @@ class VantaStudioApp {
             <label>Population Count</label>
             <span class="param-val" id="val-particles">${engine.numParticles}</span>
           </div>
-          <input type="range" id="param-particles" min="600" max="4800" step="200" value="${engine.numParticles}">
+          <input type="range" id="param-particles" min="600" max="3600" step="200" value="${engine.numParticles}">
         </div>
 
         <div class="param-row">
@@ -1084,7 +1071,7 @@ class VantaStudioApp {
             <label>Interaction Radius (R_max)</label>
             <span class="param-val" id="val-rmax">${engine.rMax}px</span>
           </div>
-          <input type="range" id="param-rmax" min="30" max="160" step="5" value="${engine.rMax}">
+          <input type="range" id="param-rmax" min="30" max="150" step="5" value="${engine.rMax}">
         </div>
 
         <div class="param-row">
@@ -1092,7 +1079,7 @@ class VantaStudioApp {
             <label>Core Repulsion (R_min)</label>
             <span class="param-val" id="val-rmin">${engine.rMin}px</span>
           </div>
-          <input type="range" id="param-rmin" min="6" max="36" step="2" value="${engine.rMin}">
+          <input type="range" id="param-rmin" min="6" max="32" step="2" value="${engine.rMin}">
         </div>
 
         <div class="param-row">
@@ -1111,33 +1098,31 @@ class VantaStudioApp {
         </div>
       `;
 
-      // Bind Particle Life Sliders
-      document.getElementById('param-particles').addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        engine.numParticles = val;
-        engine.x = new Float32Array(val);
-        engine.y = new Float32Array(val);
-        engine.vx = new Float32Array(val);
-        engine.vy = new Float32Array(val);
-        engine.species = new Int32Array(val);
+      this.setupSlider('param-particles', (val) => {
+        engine.numParticles = Math.round(val);
+        engine.x = new Float32Array(engine.numParticles);
+        engine.y = new Float32Array(engine.numParticles);
+        engine.vx = new Float32Array(engine.numParticles);
+        engine.vy = new Float32Array(engine.numParticles);
+        engine.species = new Int32Array(engine.numParticles);
         engine.init();
-        document.getElementById('val-particles').innerText = val;
+        document.getElementById('val-particles').innerText = engine.numParticles;
         this.updateHUD();
       });
 
-      document.getElementById('param-rmax').addEventListener('input', (e) => {
-        engine.rMax = parseInt(e.target.value);
+      this.setupSlider('param-rmax', (val) => {
+        engine.rMax = Math.round(val);
         document.getElementById('val-rmax').innerText = `${engine.rMax}px`;
       });
 
-      document.getElementById('param-rmin').addEventListener('input', (e) => {
-        engine.rMin = parseInt(e.target.value);
+      this.setupSlider('param-rmin', (val) => {
+        engine.rMin = Math.round(val);
         document.getElementById('val-rmin').innerText = `${engine.rMin}px`;
       });
 
-      document.getElementById('param-fric').addEventListener('input', (e) => {
-        engine.friction = parseFloat(e.target.value);
-        document.getElementById('val-fric').innerText = engine.friction.toFixed(2);
+      this.setupSlider('param-fric', (val) => {
+        engine.friction = val;
+        document.getElementById('val-fric').innerText = val.toFixed(2);
       });
 
       // Render Matrix Cells
@@ -1176,7 +1161,7 @@ class VantaStudioApp {
             <label>Agent Count</label>
             <span class="param-val" id="val-phys-agents">${engine.numAgents.toLocaleString()}</span>
           </div>
-          <input type="range" id="param-phys-agents" min="10000" max="64000" step="2000" value="${engine.numAgents}">
+          <input type="range" id="param-phys-agents" min="10000" max="48000" step="2000" value="${engine.numAgents}">
         </div>
 
         <div class="param-row">
@@ -1192,7 +1177,7 @@ class VantaStudioApp {
             <label>Sensor Distance</label>
             <span class="param-val" id="val-phys-dist">${engine.sensorDist}px</span>
           </div>
-          <input type="range" id="param-phys-dist" min="5" max="35" step="1" value="${engine.sensorDist}">
+          <input type="range" id="param-phys-dist" min="5" max="30" step="1" value="${engine.sensorDist}">
         </div>
 
         <div class="param-row">
@@ -1200,34 +1185,33 @@ class VantaStudioApp {
             <label>Trail Decay Factor</label>
             <span class="param-val" id="val-phys-decay">${engine.decayFactor.toFixed(3)}</span>
           </div>
-          <input type="range" id="param-phys-decay" min="0.85" max="0.99" step="0.005" value="${engine.decayFactor}">
+          <input type="range" id="param-phys-decay" min="0.88" max="0.99" step="0.005" value="${engine.decayFactor}">
         </div>
       `;
 
-      document.getElementById('param-phys-agents').addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        engine.numAgents = val;
-        engine.agentX = new Float32Array(val);
-        engine.agentY = new Float32Array(val);
-        engine.agentAngle = new Float32Array(val);
+      this.setupSlider('param-phys-agents', (val) => {
+        engine.numAgents = Math.round(val);
+        engine.agentX = new Float32Array(engine.numAgents);
+        engine.agentY = new Float32Array(engine.numAgents);
+        engine.agentAngle = new Float32Array(engine.numAgents);
         engine.init();
-        document.getElementById('val-phys-agents').innerText = val.toLocaleString();
+        document.getElementById('val-phys-agents').innerText = engine.numAgents.toLocaleString();
         this.updateHUD();
       });
 
-      document.getElementById('param-phys-angle').addEventListener('input', (e) => {
-        engine.sensorAngle = parseFloat(e.target.value);
-        document.getElementById('val-phys-angle').innerText = `${(engine.sensorAngle * (180 / Math.PI)).toFixed(0)}°`;
+      this.setupSlider('param-phys-angle', (val) => {
+        engine.sensorAngle = val;
+        document.getElementById('val-phys-angle').innerText = `${(val * (180 / Math.PI)).toFixed(0)}°`;
       });
 
-      document.getElementById('param-phys-dist').addEventListener('input', (e) => {
-        engine.sensorDist = parseFloat(e.target.value);
-        document.getElementById('val-phys-dist').innerText = `${engine.sensorDist}px`;
+      this.setupSlider('param-phys-dist', (val) => {
+        engine.sensorDist = val;
+        document.getElementById('val-phys-dist').innerText = `${val.toFixed(0)}px`;
       });
 
-      document.getElementById('param-phys-decay').addEventListener('input', (e) => {
-        engine.decayFactor = parseFloat(e.target.value);
-        document.getElementById('val-phys-decay').innerText = engine.decayFactor.toFixed(3);
+      this.setupSlider('param-phys-decay', (val) => {
+        engine.decayFactor = val;
+        document.getElementById('val-phys-decay').innerText = val.toFixed(3);
       });
 
     } else if (this.activeEngineId === 'flow_field') {
@@ -1241,7 +1225,7 @@ class VantaStudioApp {
             <label>Particle Count</label>
             <span class="param-val" id="val-flow-parts">${engine.numParticles.toLocaleString()}</span>
           </div>
-          <input type="range" id="param-flow-parts" min="4000" max="25000" step="1000" value="${engine.numParticles}">
+          <input type="range" id="param-flow-parts" min="3000" max="18000" step="1000" value="${engine.numParticles}">
         </div>
 
         <div class="param-row">
@@ -1269,33 +1253,32 @@ class VantaStudioApp {
         </div>
       `;
 
-      document.getElementById('param-flow-parts').addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        engine.numParticles = val;
-        engine.x = new Float32Array(val);
-        engine.y = new Float32Array(val);
-        engine.prevX = new Float32Array(val);
-        engine.prevY = new Float32Array(val);
-        engine.age = new Int32Array(val);
-        engine.maxAge = new Int32Array(val);
+      this.setupSlider('param-flow-parts', (val) => {
+        engine.numParticles = Math.round(val);
+        engine.x = new Float32Array(engine.numParticles);
+        engine.y = new Float32Array(engine.numParticles);
+        engine.prevX = new Float32Array(engine.numParticles);
+        engine.prevY = new Float32Array(engine.numParticles);
+        engine.age = new Int32Array(engine.numParticles);
+        engine.maxAge = new Int32Array(engine.numParticles);
         engine.init();
-        document.getElementById('val-flow-parts').innerText = val.toLocaleString();
+        document.getElementById('val-flow-parts').innerText = engine.numParticles.toLocaleString();
         this.updateHUD();
       });
 
-      document.getElementById('param-flow-scale').addEventListener('input', (e) => {
-        engine.noiseScale = parseFloat(e.target.value);
-        document.getElementById('val-flow-scale').innerText = (engine.noiseScale * 1000).toFixed(1);
+      this.setupSlider('param-flow-scale', (val) => {
+        engine.noiseScale = val;
+        document.getElementById('val-flow-scale').innerText = (val * 1000).toFixed(1);
       });
 
-      document.getElementById('param-flow-speed').addEventListener('input', (e) => {
-        engine.particleSpeed = parseFloat(e.target.value);
-        document.getElementById('val-flow-speed').innerText = engine.particleSpeed.toFixed(1);
+      this.setupSlider('param-flow-speed', (val) => {
+        engine.particleSpeed = val;
+        document.getElementById('val-flow-speed').innerText = val.toFixed(1);
       });
 
-      document.getElementById('param-flow-trail').addEventListener('input', (e) => {
-        engine.trailLength = parseFloat(e.target.value);
-        document.getElementById('val-flow-trail').innerText = engine.trailLength.toFixed(2);
+      this.setupSlider('param-flow-trail', (val) => {
+        engine.trailLength = val;
+        document.getElementById('val-flow-trail').innerText = val.toFixed(2);
       });
 
     } else if (this.activeEngineId === 'reaction_diffusion') {
@@ -1325,22 +1308,22 @@ class VantaStudioApp {
             <label>Diffusion Substeps</label>
             <span class="param-val" id="val-rd-sub">${engine.substeps}</span>
           </div>
-          <input type="range" id="param-rd-sub" min="4" max="14" step="1" value="${engine.substeps}">
+          <input type="range" id="param-rd-sub" min="2" max="10" step="1" value="${engine.substeps}">
         </div>
       `;
 
-      document.getElementById('param-rd-feed').addEventListener('input', (e) => {
-        engine.feed = parseFloat(e.target.value);
-        document.getElementById('val-rd-feed').innerText = engine.feed.toFixed(4);
+      this.setupSlider('param-rd-feed', (val) => {
+        engine.feed = val;
+        document.getElementById('val-rd-feed').innerText = val.toFixed(4);
       });
 
-      document.getElementById('param-rd-kill').addEventListener('input', (e) => {
-        engine.kill = parseFloat(e.target.value);
-        document.getElementById('val-rd-kill').innerText = engine.kill.toFixed(4);
+      this.setupSlider('param-rd-kill', (val) => {
+        engine.kill = val;
+        document.getElementById('val-rd-kill').innerText = val.toFixed(4);
       });
 
-      document.getElementById('param-rd-sub').addEventListener('input', (e) => {
-        engine.substeps = parseInt(e.target.value);
+      this.setupSlider('param-rd-sub', (val) => {
+        engine.substeps = Math.round(val);
         document.getElementById('val-rd-sub').innerText = engine.substeps;
       });
     }
@@ -1409,7 +1392,6 @@ class VantaStudioApp {
         const targetTab = document.querySelector(`.engine-tab[data-engine="${p.engine}"]`);
         if (targetTab) targetTab.click();
 
-        // Apply Preset Parameters
         const eng = this.activeEngine;
         if (p.engine === 'particle_life') {
           if (p.params.rMax) eng.rMax = p.params.rMax;
@@ -1488,7 +1470,7 @@ class VantaStudioApp {
   }
 }
 
-// Bootstrap Application on Load
+// Bootstrap on DOM ready
 window.addEventListener('DOMContentLoaded', () => {
   new VantaStudioApp();
 });
