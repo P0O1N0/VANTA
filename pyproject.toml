@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=65.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vanta"
+version = "1.0.0"
+description = "VANTA — Generative Life Studio: Offline-first desktop studio for generative art, artificial life, and interactive simulations."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "P O N", email = "p0o1n0@users.noreply.github.com" }
+]
+keywords = [
+    "generative-art",
+    "artificial-life",
+    "simulation",
+    "particle-life",
+    "physarum",
+    "flow-field",
+    "reaction-diffusion",
+    "pyside6",
+    "opengl"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Artistic Software",
+    "Topic :: Scientific/Engineering :: Artificial Life",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "PySide6>=6.6.0,<6.9.0",
+    "numpy>=1.26.0,<2.3.0",
+    "scipy>=1.12.0",
+    "Pillow>=10.2.0",
+    "PyOpenGL>=3.1.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pyinstaller>=6.4.0",
+]
+
+[project.scripts]
+vanta = "vanta.main:main"
+
+[project.urls]
+Homepage = "https://github.com/P0O1N0/VANTA"
+Repository = "https://github.com/P0O1N0/VANTA.git"
+Telegram = "https://t.me/P0O1N0"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --import-mode=importlib"
+testpaths = [
+    "tests",
+]
+pythonpath = ["src"]
