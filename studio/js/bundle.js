@@ -2725,8 +2725,28 @@ class VantaStudioApp {
     this.initMouseInteractions();
     this.renderWorldsDrawer();
     this.renderInspector();
+    this.initSplashScreen();
 
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  initSplashScreen() {
+    const splash = document.getElementById('vanta-splash');
+    const fill = document.getElementById('splash-progress-fill');
+    if (!splash) return;
+
+    // Animate hairline progress bar over 4,000 ms
+    requestAnimationFrame(() => {
+      if (fill) fill.style.width = '100%';
+    });
+
+    // Enforce 4.0 second (4,000 ms) minimum display duration
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+      setTimeout(() => {
+        splash.classList.add('hidden');
+      }, 700);
+    }, 4000);
   }
 
   get activeEngine() {

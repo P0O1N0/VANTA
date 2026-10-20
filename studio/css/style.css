@@ -1314,3 +1314,197 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-color: var(--accent-purple);
   box-shadow: 0 0 24px var(--accent-purple-glow);
 }
+
+/* ========================================================================= */
+/* Premium Animated Startup Screen (4.0s Launch Experience)                  */
+/* ========================================================================= */
+.vanta-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: radial-gradient(circle at 50% 45%, #101422 0%, #090c14 65%, #05070c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vanta-splash.fade-out {
+  opacity: 0;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+.vanta-splash.hidden {
+  display: none !important;
+}
+
+.splash-card {
+  width: 580px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  user-select: none;
+}
+
+.splash-emblem {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 26px;
+}
+
+.emblem-halo {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 245, 212, 0.22) 0%, rgba(138, 43, 226, 0.12) 50%, transparent 75%);
+  animation: emblemPulse 3.5s ease-in-out infinite alternate;
+}
+
+.emblem-ring-outer {
+  position: absolute;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(0, 245, 212, 0.45);
+  animation: emblemRotateCW 12s linear infinite;
+}
+
+.emblem-ring-inner {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(192, 132, 252, 0.55);
+  animation: emblemRotateCCW 8s linear infinite;
+}
+
+.emblem-core {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 10%, #00f5d4 60%, rgba(138, 43, 226, 0.6) 100%);
+  box-shadow: 0 0 20px rgba(0, 245, 212, 0.8), 0 0 40px rgba(138, 43, 226, 0.5);
+  animation: coreBreathe 2s ease-in-out infinite alternate;
+}
+
+.emblem-node {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00f5d4;
+  box-shadow: 0 0 6px #00f5d4;
+}
+
+.emblem-node.node-1 {
+  top: -26px;
+  left: 6px;
+}
+.emblem-node.node-2 {
+  top: 18px;
+  left: -20px;
+}
+.emblem-node.node-3 {
+  top: 18px;
+  left: 32px;
+}
+
+@keyframes emblemRotateCW {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes emblemRotateCCW {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes emblemPulse {
+  0% { transform: scale(0.92); opacity: 0.6; }
+  100% { transform: scale(1.12); opacity: 1; }
+}
+
+@keyframes coreBreathe {
+  0% { transform: scale(0.9); box-shadow: 0 0 14px rgba(0, 245, 212, 0.6); }
+  100% { transform: scale(1.15); box-shadow: 0 0 24px rgba(0, 245, 212, 1), 0 0 44px rgba(138, 43, 226, 0.7); }
+}
+
+.splash-title-box {
+  margin-bottom: 22px;
+}
+
+.splash-title {
+  font-family: var(--font-main);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
+}
+
+.splash-subtitle {
+  font-family: var(--font-main);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4.5px;
+  color: #00f5d4;
+  text-transform: uppercase;
+}
+
+.splash-attribution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 34px;
+}
+
+.splash-attr-text {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: #94a3b8;
+}
+
+.splash-attr-handle {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #c084fc;
+}
+
+.splash-progress-track {
+  width: 260px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.splash-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00f5d4 0%, #8a2be2 100%);
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(0, 245, 212, 0.6);
+  transition: width 3.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+}
