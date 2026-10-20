@@ -2237,11 +2237,12 @@ class ThermalConvectionEngine {
     this.pressure.fill(0);
 
     for (let y = 0; y < gh; y++) {
-      const yNorm = y / gh;
+      const yNorm = y / (gh - 1);
       for (let x = 0; x < gw; x++) {
-        const xNorm = x / gw;
-        const pert = Math.sin(xNorm * Math.PI * 6) * 0.18 * Math.sin(yNorm * Math.PI);
-        this.temp[y * gw + x] = Math.max(0, Math.min(1.0, (1.0 - yNorm) + pert));
+        const xNorm = x / (gw - 1);
+        // Perturbation to seed counter-rotating Rayleigh-Bénard roll cells
+        const pert = Math.sin(xNorm * Math.PI * 4) * 0.12 * Math.sin(yNorm * Math.PI);
+        this.temp[y * gw + x] = Math.max(0.0, Math.min(1.0, yNorm + pert));
       }
     }
 
@@ -2266,16 +2267,29 @@ class ThermalConvectionEngine {
     const p = this.pressure;
     const div = this.div;
 
+    // Numerical stability guard: limit maximum delta-time
+    const effDt = Math.min(dt || 0.016, 0.032);
     const buoyK = this.buoyancy * (env ? (1.0 + env.gravity) : 1.0);
-    const visc = (env ? env.viscosity : this.viscosity) * 0.45;
+    const visc = Math.max(0.01, Math.min(0.2, (env ? env.viscosity : this.viscosity) * 0.45));
+    const maxV = 7.0;
+
+    // Compute average temperature to enforce net-zero mean buoyancy (prevents Poisson divergence)
+    let sumT = 0;
+    for (let i = 0; i < T.length; i++) {
+      if (!isFinite(T[i])) T[i] = 0.5;
+      sumT += T[i];
+    }
+    const avgT = sumT / T.length;
 
     // 1. Buoyancy force: hot fluid rises (-vy), cold fluid sinks (+vy)
     for (let y = 1; y < gh - 1; y++) {
       const yOffset = y * gw;
       for (let x = 1; x < gw - 1; x++) {
         const idx = yOffset + x;
-        const buoyancyForce = (T[idx] - 0.5) * buoyK;
-        vy[idx] -= buoyancyForce * dt * 9.5;
+        const buoyancyForce = (T[idx] - avgT) * buoyK;
+        vy[idx] -= buoyancyForce * effDt * 8.0;
+        if (vy[idx] > maxV) vy[idx] = maxV;
+        else if (vy[idx] < -maxV) vy[idx] = -maxV;
       }
     }
 
@@ -2297,13 +2311,12 @@ class ThermalConvectionEngine {
             if (dist <= r) {
               const falloff = 1.0 - dist / r;
               if (mouse.button === 2) {
-                T[idx] = Math.max(0, T[idx] - 0.6 * falloff);
-                vy[idx] += 16.0 * falloff; // Sinking cold downdraft
+                T[idx] = Math.max(0.0, T[idx] - 0.6 * falloff);
+                vy[idx] += 12.0 * falloff; // Sinking cold downdraft
               } else {
                 T[idx] = Math.min(1.0, T[idx] + 0.8 * falloff);
-                vy[idx] -= 22.0 * falloff; // Rising hot plume
-                // Lateral convective expansion
-                vx[idx] += (dx / (dist + 0.1)) * 6.0 * falloff;
+                vy[idx] -= 16.0 * falloff; // Rising hot plume
+                vx[idx] += (dx / (dist + 0.1)) * 5.0 * falloff;
               }
             }
           }
@@ -2311,7 +2324,19 @@ class ThermalConvectionEngine {
       }
     }
 
-    // 2. Enforce Incompressibility (Poisson Pressure Solver)
+    // 2. Physical Thermal Diffusion (Laplacian operator for heat conduction)
+    // Ensures top cold boundary layer cools fluid & bottom heated plate warms fluid
+    const kappa = 0.22;
+    for (let y = 1; y < gh - 1; y++) {
+      const yOffset = y * gw;
+      for (let x = 1; x < gw - 1; x++) {
+        const idx = yOffset + x;
+        const lapT = (T[idx - 1] + T[idx + 1] + T[idx - gw] + T[idx + gw] - 4.0 * T[idx]);
+        T[idx] = Math.max(0.0, Math.min(1.0, T[idx] + kappa * lapT * effDt * 20.0));
+      }
+    }
+
+    // 3. Enforce Incompressibility (Poisson Pressure Solver with Neumann Boundaries)
     for (let y = 1; y < gh - 1; y++) {
       const yOffset = y * gw;
       for (let x = 1; x < gw - 1; x++) {
@@ -2321,7 +2346,17 @@ class ThermalConvectionEngine {
       }
     }
 
-    for (let iter = 0; iter < 10; iter++) {
+    for (let iter = 0; iter < 12; iter++) {
+      // Neumann boundary condition: dp/dn = 0 at solid walls
+      for (let x = 0; x < gw; x++) {
+        p[x] = p[x + gw];
+        p[(gh - 1) * gw + x] = p[(gh - 2) * gw + x];
+      }
+      for (let y = 0; y < gh; y++) {
+        p[y * gw] = p[y * gw + 1];
+        p[y * gw + gw - 1] = p[y * gw + gw - 2];
+      }
+
       for (let y = 1; y < gh - 1; y++) {
         const yOffset = y * gw;
         for (let x = 1; x < gw - 1; x++) {
@@ -2331,22 +2366,36 @@ class ThermalConvectionEngine {
       }
     }
 
+    // Velocity projection
     for (let y = 1; y < gh - 1; y++) {
       const yOffset = y * gw;
       for (let x = 1; x < gw - 1; x++) {
         const idx = yOffset + x;
         vx[idx] -= 0.5 * (p[idx + 1] - p[idx - 1]);
         vy[idx] -= 0.5 * (p[idx + gw] - p[idx - gw]);
+        // Safety velocity clamping
+        if (vx[idx] > maxV) vx[idx] = maxV; else if (vx[idx] < -maxV) vx[idx] = -maxV;
+        if (vy[idx] > maxV) vy[idx] = maxV; else if (vy[idx] < -maxV) vy[idx] = -maxV;
       }
     }
 
-    // 3. Semi-Lagrangian Advection
+    // Solid no-slip / no-penetration boundary conditions
+    for (let x = 0; x < gw; x++) {
+      vy[x] = 0;
+      vy[(gh - 1) * gw + x] = 0;
+    }
+    for (let y = 0; y < gh; y++) {
+      vx[y * gw] = 0;
+      vx[y * gw + gw - 1] = 0;
+    }
+
+    // 4. Semi-Lagrangian Advection
     for (let y = 1; y < gh - 1; y++) {
       const yOffset = y * gw;
       for (let x = 1; x < gw - 1; x++) {
         const idx = yOffset + x;
-        let prevX = x - vx[idx] * dt * 15.0;
-        let prevY = y - vy[idx] * dt * 15.0;
+        let prevX = x - vx[idx] * effDt * 16.0;
+        let prevY = y - vy[idx] * effDt * 16.0;
 
         if (prevX < 1) prevX = 1; else if (prevX > gw - 2) prevX = gw - 2;
         if (prevY < 1) prevY = 1; else if (prevY > gh - 2) prevY = gh - 2;
@@ -2365,45 +2414,58 @@ class ThermalConvectionEngine {
         const valVx = (1 - fx) * (1 - fy) * vx[i00] + fx * (1 - fy) * vx[i10] + (1 - fx) * fy * vx[i01] + fx * fy * vx[i11];
         const valVy = (1 - fx) * (1 - fy) * vy[i00] + fx * (1 - fy) * vy[i10] + (1 - fx) * fy * vy[i01] + fx * fy * vy[i11];
 
-        nT[idx] = valT;
-        nVx[idx] = valVx * (1.0 - visc);
-        nVy[idx] = valVy * (1.0 - visc);
+        nT[idx] = Math.max(0.0, Math.min(1.0, valT));
+        nVx[idx] = Math.max(-maxV, Math.min(maxV, valVx * (1.0 - visc)));
+        nVy[idx] = Math.max(-maxV, Math.min(maxV, valVy * (1.0 - visc)));
       }
     }
 
-    // Thermal boundaries: Bottom heated (molten), top chilled
+    // Thermal and velocity boundary conditions
+    // Top plate is chilled (0.0), bottom plate is heated (1.0)
     for (let x = 0; x < gw; x++) {
-      nT[(gh - 1) * gw + x] = 1.0;
       nT[x] = 0.0;
-      nVy[(gh - 1) * gw + x] = 0;
+      nT[(gh - 1) * gw + x] = 1.0;
       nVy[x] = 0;
+      nVy[(gh - 1) * gw + x] = 0;
+      nVx[x] = 0;
+      nVx[(gh - 1) * gw + x] = 0;
+    }
+    // Side walls are insulated (adiabatic)
+    for (let y = 0; y < gh; y++) {
+      nT[y * gw] = nT[y * gw + 1];
+      nT[y * gw + gw - 1] = nT[y * gw + gw - 2];
+      nVx[y * gw] = 0;
+      nVx[y * gw + gw - 1] = 0;
+      nVy[y * gw] = nVy[y * gw + 1];
+      nVy[y * gw + gw - 1] = nVy[y * gw + gw - 2];
     }
 
     T.set(nT);
     vx.set(nVx);
     vy.set(nVy);
 
-    // 4. Update 1,000 Continuous Tracer Streamline Filaments
+    // 5. Update 1,000 Continuous Tracer Streamline Filaments
     for (let i = 0; i < this.numTracers; i++) {
       this.prevTx[i] = this.tx[i];
       this.prevTy[i] = this.ty[i];
+
+      if (!isFinite(this.tx[i]) || !isFinite(this.ty[i]) || this.tx[i] < 1 || this.tx[i] >= gw - 1 || this.ty[i] < 1 || this.ty[i] >= gh - 1) {
+        this.tx[i] = Math.random() * (gw - 4) + 2;
+        this.ty[i] = gh - 3;
+        this.prevTx[i] = this.tx[i];
+        this.prevTy[i] = this.ty[i];
+        continue;
+      }
 
       const gx = Math.max(1, Math.min(gw - 2, Math.floor(this.tx[i])));
       const gy = Math.max(1, Math.min(gh - 2, Math.floor(this.ty[i])));
       const idx = gy * gw + gx;
 
-      const spdX = vx[idx];
-      const spdY = vy[idx];
-      this.tx[i] += spdX * dt * 20.0;
-      this.ty[i] += spdY * dt * 20.0;
+      const spdX = isFinite(vx[idx]) ? vx[idx] : 0;
+      const spdY = isFinite(vy[idx]) ? vy[idx] : 0;
+      this.tx[i] += spdX * effDt * 20.0;
+      this.ty[i] += spdY * effDt * 20.0;
       this.tSpeed[i] = Math.hypot(spdX, spdY);
-
-      if (this.tx[i] < 1 || this.tx[i] >= gw - 1 || this.ty[i] < 1 || this.ty[i] >= gh - 1) {
-        this.tx[i] = Math.random() * (gw - 4) + 2;
-        this.ty[i] = gh - 3;
-        this.prevTx[i] = this.tx[i];
-        this.prevTy[i] = this.ty[i];
-      }
     }
   }
 
@@ -3712,10 +3774,8 @@ class VantaStudioApp {
         this.switchWorld(p.engine);
 
         const eng = this.activeEngine;
-        if (p.engine === 'particle_life') {
-          if (p.params.rMax) eng.rMax = p.params.rMax;
-          if (p.params.rMin) eng.rMin = p.params.rMin;
-          if (p.params.friction) eng.friction = p.params.friction;
+        if (p.params) {
+          Object.assign(eng, p.params);
         }
         eng.init();
         this.renderInspector();

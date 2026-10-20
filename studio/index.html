@@ -19,6 +19,47 @@
   <!-- Drawer Backdrop -->
   <div id="drawer-backdrop" class="drawer-backdrop"></div>
 
+  <!-- Slide-Out Worlds Navigation Drawer (Hamburger Drawer) -->
+  <nav id="worlds-drawer" class="worlds-drawer glass">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <div class="drawer-tag">UNIVERSE ARCHETYPES</div>
+        <h2 class="drawer-heading">Simulation Worlds</h2>
+      </div>
+      <button id="close-drawer" class="btn btn-icon" title="Close Drawer (Esc)">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Worlds Category Filter -->
+    <div class="drawer-categories">
+      <button class="cat-pill active" data-cat="all">
+        <span class="cat-label">All Universes</span>
+        <span class="cat-count">13</span>
+      </button>
+      <button class="cat-pill" data-cat="biology">
+        <span class="cat-label">Biological</span>
+        <span class="cat-count">5</span>
+      </button>
+      <button class="cat-pill" data-cat="physics">
+        <span class="cat-label">Cosmic & Physics</span>
+        <span class="cat-count">5</span>
+      </button>
+      <button class="cat-pill" data-cat="quantum">
+        <span class="cat-label">Subatomic & Phase</span>
+        <span class="cat-count">3</span>
+      </button>
+    </div>
+
+    <!-- Worlds Grid List -->
+    <div id="worlds-list" class="worlds-list">
+      <!-- Rendered dynamically with 13 complete simulation worlds -->
+    </div>
+  </nav>
+
   <!-- Cinematic World Loading & Transition Portal Overlay -->
   <div id="world-loader" class="loader-overlay hidden">
     <div class="loader-dialog glass">
@@ -162,47 +203,6 @@
         </div>
       </div>
     </header>
-
-    <!-- Slide-Out Worlds Navigation Drawer (Hamburger Drawer) -->
-    <nav id="worlds-drawer" class="worlds-drawer glass">
-      <div class="drawer-header">
-        <div class="drawer-title-group">
-          <div class="drawer-tag">UNIVERSE ARCHETYPES</div>
-          <h2 class="drawer-heading">Simulation Worlds</h2>
-        </div>
-        <button id="close-drawer" class="btn btn-icon" title="Close Drawer (Esc)">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Worlds Category Filter -->
-      <div class="drawer-categories">
-        <button class="cat-pill active" data-cat="all">
-          <span class="cat-label">All Universes</span>
-          <span class="cat-count">13</span>
-        </button>
-        <button class="cat-pill" data-cat="biology">
-          <span class="cat-label">Biological</span>
-          <span class="cat-count">5</span>
-        </button>
-        <button class="cat-pill" data-cat="physics">
-          <span class="cat-label">Cosmic & Physics</span>
-          <span class="cat-count">5</span>
-        </button>
-        <button class="cat-pill" data-cat="quantum">
-          <span class="cat-label">Subatomic & Phase</span>
-          <span class="cat-count">3</span>
-        </button>
-      </div>
-
-      <!-- Worlds Grid List -->
-      <div id="worlds-list" class="worlds-list">
-        <!-- Rendered dynamically with 13 complete simulation worlds -->
-      </div>
-    </nav>
 
     <!-- Floating Left Inspector Panel -->
     <aside id="inspector" class="glass">

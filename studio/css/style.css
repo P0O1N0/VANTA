@@ -384,10 +384,10 @@ body.zen-mode #hud {
 /* Slide-Out Worlds Navigation Drawer (Hamburger Drawer)                     */
 /* ========================================================================= */
 .worlds-drawer {
-  position: absolute;
-  top: 12px;
+  position: fixed;
+  top: 14px;
   left: 14px;
-  bottom: 12px;
+  bottom: 14px;
   width: 440px;
   max-width: calc(100vw - 28px);
   z-index: 100;
@@ -413,6 +413,10 @@ body.zen-mode #hud {
   pointer-events: auto !important;
 }
 
+.worlds-drawer.open * {
+  pointer-events: auto !important;
+}
+
 .worlds-drawer:not(.open),
 .worlds-drawer:not(.open) * {
   display: none !important;
@@ -425,7 +429,7 @@ body.zen-mode #hud {
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  z-index: 85;
+  z-index: 80;
   display: none !important;
   opacity: 0;
   pointer-events: none !important;
