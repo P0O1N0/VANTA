@@ -91,8 +91,8 @@ canvas#simCanvas {
 .worlds-drawer.open, .worlds-drawer.open *, 
 #inspector, #inspector *, 
 #hud, #hud *, 
-.modal-dialog, .modal-dialog *, 
-.loader-dialog, .loader-dialog * {
+.modal-overlay.open .modal-dialog, .modal-overlay.open .modal-dialog *, 
+.loader-overlay:not(.hidden) .loader-dialog, .loader-overlay:not(.hidden) .loader-dialog * {
   pointer-events: auto;
 }
 
@@ -465,7 +465,8 @@ body.zen-mode #hud {
 
 /* Categories Filter Pills */
 .drawer-categories {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   padding: 12px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -473,27 +474,31 @@ body.zen-mode #hud {
 }
 
 .cat-pill {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  background: #141724;
   color: #8b98b2;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
 .cat-pill:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  background: #1e2335;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .cat-pill.active {
-  background: rgba(0, 245, 212, 0.15);
-  border-color: var(--accent-cyan);
-  color: #00f5d4;
-  font-weight: 600;
+  background: rgba(0, 245, 212, 0.16) !important;
+  border-color: var(--accent-cyan) !important;
+  color: #00f5d4 !important;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(0, 245, 212, 0.2);
 }
 
 /* Worlds List in Drawer */
@@ -516,8 +521,9 @@ body.zen-mode #hud {
 }
 
 .world-card {
-  background: #151824;
+  background: #141724;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid transparent;
   border-radius: 10px;
   padding: 14px 16px;
   cursor: pointer;
@@ -531,15 +537,33 @@ body.zen-mode #hud {
 
 .world-card:hover {
   border-color: var(--accent-cyan);
-  background: #1c2132;
+  background: #1b2030;
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .world-card.active {
-  border-color: var(--accent-cyan);
-  background: rgba(0, 245, 212, 0.1);
-  box-shadow: 0 0 16px rgba(0, 245, 212, 0.25);
+  border-color: var(--accent-cyan) !important;
+  border-left: 4px solid var(--accent-cyan) !important;
+  background: rgba(0, 245, 212, 0.1) !important;
+  box-shadow: 0 0 18px rgba(0, 245, 212, 0.22) !important;
+}
+
+.world-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.world-active-pill {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: #000;
+  background: var(--accent-cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
 }
 
 .world-card-top {
@@ -937,10 +961,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s;
 }
 
-.loader-overlay.hidden {
+.loader-overlay.hidden,
+.loader-overlay.hidden * {
   display: none !important;
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 .loader-dialog {
@@ -1058,6 +1084,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .modal-overlay.open {
   opacity: 1;
   pointer-events: auto;
+}
+
+.modal-overlay:not(.open),
+.modal-overlay:not(.open) * {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 .modal-dialog {

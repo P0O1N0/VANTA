@@ -860,6 +860,7 @@ class QuantumWaveEngine {
     this.wall = new Uint8Array(size);
 
     this.time = 0;
+    this.dispersionSpeed = 1.0;
     this.palette = PALETTES.quantum_frost;
     this.init();
   }
@@ -893,9 +894,10 @@ class QuantumWaveEngine {
     const nu = this.nextU;
     const wall = this.wall;
 
-    const cSq = 0.22;
+    const speed = this.dispersionSpeed || 1.0;
+    const cSq = 0.22 * speed;
     const damp = 0.994;
-    this.time += dt * 4.0;
+    this.time += dt * 4.0 * speed;
 
     // Harmonic wave emitter at left boundary
     const emitterY = Math.floor(gh * 0.5);
@@ -1003,6 +1005,7 @@ class CrystalGrowthEngine {
     this.crystal = new Float32Array(size);
     this.vapor = new Float32Array(size);
 
+    this.undercooling = 0.65;
     this.palette = PALETTES.bioluminescence;
     this.init();
   }
@@ -1031,8 +1034,9 @@ class CrystalGrowthEngine {
     const vapor = this.vapor;
 
     const temp = env ? env.temperature : 24.0;
-    // Cold temperature promotes crystal growth; warm temperature melts it
-    const growthThreshold = Math.max((temp - 5.0) * 0.015 + 0.35, 0.15);
+    const undercool = (this.undercooling !== undefined) ? this.undercooling : 0.65;
+    // Cold temperature and higher undercooling promote dendritic crystal growth
+    const growthThreshold = Math.max((temp - 5.0) * 0.012 + (1.0 - undercool) * 0.55, 0.05);
     const isMelting = temp > 45.0;
 
     for (let iter = 0; iter < 3; iter++) {
@@ -2789,18 +2793,29 @@ class VantaStudioApp {
     if (btn) btn.classList.remove('active');
   }
 
-  renderWorldsDrawer(activeCategory = 'all') {
+  renderWorldsDrawer(activeCategory = null) {
+    if (activeCategory !== null) {
+      this.activeDrawerCategory = activeCategory;
+    }
+    const cat = this.activeDrawerCategory || 'all';
+
+    // Synchronize category pills in DOM
+    document.querySelectorAll('.cat-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.cat === cat);
+    });
+
     const list = document.getElementById('worlds-list');
     if (!list) return;
     list.innerHTML = '';
 
-    const filtered = activeCategory === 'all'
+    const filtered = cat === 'all'
       ? WORLDS
-      : WORLDS.filter(w => w.category === activeCategory);
+      : WORLDS.filter(w => w.category === cat);
 
     filtered.forEach(world => {
+      const isActive = (world.id === this.activeEngineId);
       const card = document.createElement('div');
-      card.className = `world-card ${world.id === this.activeEngineId ? 'active' : ''}`;
+      card.className = `world-card ${isActive ? 'active' : ''}`;
       card.innerHTML = `
         <div class="world-card-top">
           <div class="world-card-title-group">
@@ -2814,7 +2829,10 @@ class VantaStudioApp {
               <div class="world-card-title">${world.name}</div>
             </div>
           </div>
-          <span class="world-card-badge">${world.badge}</span>
+          <div class="world-card-badges">
+            ${isActive ? '<span class="world-active-pill">ACTIVE</span>' : ''}
+            <span class="world-card-badge">${world.badge}</span>
+          </div>
         </div>
         <p class="world-card-desc">${world.desc}</p>
         <div class="world-card-meta">
@@ -2824,7 +2842,8 @@ class VantaStudioApp {
         </div>
       `;
 
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.switchWorld(world.id);
       });
 
@@ -3479,12 +3498,13 @@ class VantaStudioApp {
         <div class="param-row">
           <div class="param-info">
             <label>Wave Dispersion Speed</label>
-            <span class="param-val" id="val-qw-speed">1.0x</span>
+            <span class="param-val" id="val-qw-speed">${(engine.dispersionSpeed || 1.0).toFixed(1)}x</span>
           </div>
-          <input type="range" id="param-qw-speed" min="0.3" max="2.5" step="0.1" value="1.0">
+          <input type="range" id="param-qw-speed" min="0.3" max="2.5" step="0.1" value="${engine.dispersionSpeed || 1.0}">
         </div>
       `;
       this.setupSlider('param-qw-speed', (val) => {
+        engine.dispersionSpeed = val;
         document.getElementById('val-qw-speed').innerText = `${val.toFixed(1)}x`;
       });
 
