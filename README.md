@@ -1,173 +1,203 @@
 # VANTA — Generative Life Studio
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python: 3.10+](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
-[![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6%20(Qt%206.8)-green)](https://www.qt.io/)
-[![Acceleration: NumPy & SciPy](https://img.shields.io/badge/Compute-NumPy%20%26%20SciPy-orange)](https://numpy.org/)
-[![Platform: Windows / Linux / macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](#system-requirements)
+An interactive desktop and web studio for exploring artificial life, non-linear dynamics, and emergent physical phenomena through real-time mathematical simulation.
 
-**VANTA** is a polished, offline-first desktop studio for generative art, artificial life, and interactive mathematical simulations. It transforms your computer into a living digital universe where emergent behaviors evolve in real-time according to scientifically inspired simulation laws.
-
-Designed from the ground up for creative coders, generative artists, simulation researchers, and enthusiasts, VANTA requires **no internet connection, no user accounts, no subscriptions, and no cloud backends**.
+[![VANTA Overview](docs/screenshots/vanta-hero-overview.png)](docs/screenshots/vanta-hero-overview.png)
 
 ---
 
-## Visual Showcase
+## Overview
 
-| Particle Life (Multi-Species Ecosystem) | Physarum Polycephalum (Slime Mold) |
+VANTA is a real-time computational laboratory that unites continuous partial differential equations, discrete agent dynamics, particle physics, and cellular automata into a single interactive environment. Rather than rendering pre-calculated animations or static art, every pattern in VANTA emerges dynamically from underlying mathematical laws solved frame-by-frame on your hardware.
+
+From the microscopic biogenesis of asymmetric particle species to the macroscopic spirals of relativistic stellar clusters and the wavepacket interference of quantum mechanics, VANTA lets you directly perturb parameters, inject forces, and observe how macroscopic order arises spontaneously from microscopic interactions.
+
+### Why VANTA Was Built
+Natural complexity often arises from surprisingly concise rules. Alan Turing showed how two diffusing chemical morphogens could produce animal coat patterns; Craig Reynolds demonstrated that three local steering rules could mimic a flock of thousands of birds; and asymmetric particle interactions can generate self-replicating, cell-like clusters without any genetic code.
+
+VANTA was created to bring these disparate disciplines—theoretical physics, computational biology, non-linear chemistry, and creative coding—into a coherent, tactile studio where anyone can experiment with these phenomena in real time.
+
+---
+
+## Simulation Worlds Catalog
+
+VANTA includes thirteen complete, fully interactive simulation engines across biological morphogenesis, astrophysical dynamics, and mathematical chaos:
+
+| Universe | Archetype | Governing Mathematical Model | Key Emergent Behaviors |
+| :--- | :--- | :--- | :--- |
+| **Particle Life** | Primordial Biogenesis | Non-reciprocal force matrix $F(r, M_{\alpha\beta})$ | Cellular mitosis, predator-prey chases, symbiotic clusters |
+| **Physarum Polycephalum** | Slime Mold Network | Jones multi-agent chemo-taxis & spatial diffusion | Efficient biological transport networks, Steiner tree routing |
+| **Cosmic N-Body Gravity** | Astrophysical Dynamics | Newton-Plummer potential with Barnes-Hut quadtree | Accretion discs, Keplerian galactic arms, gravitational slingshots |
+| **Boids Swarm Intelligence** | Collective Behavior | Reynolds triad (Separation, Alignment, Cohesion) | Murmuration waves, dynamic obstacle avoidance, flocking |
+| **Quantum Wave Packet** | Quantum Mechanics | Time-dependent Schrödinger equation ($i\hbar \partial_t \psi = \hat{H}\psi$) | Double-slit diffraction, phase interference, barrier tunneling |
+| **Dendritic Crystal Growth** | Phase-Field Solidification | Kobayashi anisotropic thermal phase-field equations | Six-fold symmetric snowflake branches, side-branching dendrites |
+| **Curl-Noise Flow Field** | Incompressible Aerodynamics | Divergence-free vector potential ($\vec{v} = \nabla \times \vec{\Psi}$) | Mass-conserving turbulence, vortex filaments, fluid streamlines |
+| **Gray-Scott Reaction-Diffusion** | Chemical Morphogenesis | Coupled cubic autocatalytic reaction-diffusion PDEs | Mitotic spots, labyrinthine skin patterns, propagating solitons |
+| **Continuous Lenia** | Continuous Automata | Continuous kernel convolution $K * A$ and growth mapping $G$ | Smooth gliding solitons, organic breathing organisms, cellular motility |
+| **Ferrofluid Dynamics** | Magnetic Hydrodynamics | Rosensweig normal-field surface tension instability | Spontaneous hexagonal magnetic spike lattices, magnetic levitation |
+| **Fractal Growth (DLA)** | Stochastic Aggregation | Witten-Sander diffusion-limited aggregation | Scale-invariant fractal tree structures with dimension $D \approx 1.71$ |
+| **Excitable Medium** | Non-Linear Waves | FitzHugh-Nagumo / Barkley activator-inhibitor system | Rotating spiral wave vortices, wavefront collisions, refractory tails |
+| **Thermal Convection** | Fluid Mechanics | Incompressible Navier-Stokes with Oberbeck-Boussinesq | Rayleigh-Bénard counter-rotating roll cells, ascending mantle plumes |
+
+---
+
+## Visual Gallery
+
+The images below are genuine captures taken directly from the running simulation studio at 1440×900 resolution:
+
+| Quantum Wave Packet Interference | Physarum Vascular Foraging Network |
 | :---: | :---: |
-| ![Particle Life](assets/branding/particle_life_preview.png) | ![Physarum](assets/branding/physarum_preview.png) |
-| **Procedural Curl-Noise Flow Field** | **Gray-Scott Reaction-Diffusion** |
-| ![Flow Field](assets/branding/flow_field_preview.png) | ![Reaction-Diffusion](assets/branding/reaction_diffusion_preview.png) |
+| [![Quantum Wave](docs/screenshots/vanta-quantum-wave.png)](docs/screenshots/vanta-quantum-wave.png) | [![Physarum](docs/screenshots/vanta-physarum.png)](docs/screenshots/vanta-physarum.png) |
+| *Time-dependent Schrödinger wavepacket splitting through double-slit barrier* | *Single-celled slime mold synthesizing optimal transport paths between food sources* |
+
+| Cosmic N-Body Gravity | Gray-Scott Reaction-Diffusion |
+| :---: | :---: |
+| [![Cosmic Gravity](docs/screenshots/vanta-cosmic-gravity.png)](docs/screenshots/vanta-cosmic-gravity.png) | [![Reaction-Diffusion](docs/screenshots/vanta-reaction-diffusion.png)](docs/screenshots/vanta-reaction-diffusion.png) |
+| *Accretion disc and stellar cluster orbiting a gravitational singularity* | *Turing pattern formation generating self-replicating mitotic chemical spots* |
+
+| Ferrofluid Magnetic Spikes | Rayleigh-Bénard Thermal Convection |
+| :---: | :---: |
+| [![Ferrofluid](docs/screenshots/vanta-ferrofluid.png)](docs/screenshots/vanta-ferrofluid.png) | [![Thermal Convection](docs/screenshots/vanta-thermal-convection.png)](docs/screenshots/vanta-thermal-convection.png) |
+| *Surface spike lattice under vertical magnetic induction* | *Coupled thermal buoyancy and Navier-Stokes vorticity rolls* |
+
+| Thirteen-Universe Archetype Drawer |
+| :---: |
+| [![Worlds Drawer](docs/screenshots/vanta-worlds-drawer.png)](docs/screenshots/vanta-worlds-drawer.png) |
+| *Categorized slide-out universe catalog with real-time entity counts and physics formulas* |
 
 ---
 
 ## Key Features
 
-### 1. Four Genuinely Functional Simulation Engines
-- **Engine A — Particle Life:** Continuous-space multi-species particle ecosystem. Features an interactive $N \times N$ force matrix, attractive and repulsive distance curves, toroidal/bounce boundary physics, and uniform grid spatial partitioning for high particle throughput.
-- **Engine B — Physarum (Slime Mold):** Agent-based emergent biological network based on Jeff Jones' sensory-motor model. Agents sense chemical trail gradients, steer toward chemoattractants, deposit signals, and induce self-organizing vein structures with 2D diffusion and decay.
-- **Engine C — Flow Field:** Procedural divergence-free curl-noise vector field generating smooth, organic, fluid-like particle ribbons with velocity-mapped color ramps and interactive mouse-injected vortices.
-- **Engine D — Reaction-Diffusion:** Gray-Scott chemical morphogenesis partial differential equation (PDE) solver using an isotropic 9-point discrete Laplacian stencil. Generates Pearson corals, dividing cellular mitosis, moving solitons, and labyrinthine spirals.
-
-### 2. Dual Rendering Pipeline
-- **Hardware-Accelerated OpenGL Renderer:** Direct `QOpenGLWidget` integration with point sprite batching and textured quads for high frame rates on modern GPUs.
-- **Robust CPU Software Rasterizer:** Clean `QPainter` with memory-mapped `QImage` buffers guaranteeing universal execution and zero crash risk on low-spec integrated graphics, virtual machines, or remote desktops.
-- **Curated Color Palettes:** Dynamic false-color ramps including *Neon Cyber*, *Bioluminescence*, *Amber Ember*, *Spectral Velvet*, *Toxic Emerald*, and *Monochrome*.
-
-### 3. Professional Desktop Studio UX
-- **Responsive Workspace:** Large central interactive simulation canvas, top control bar, collapsible left engine rail, and dynamic contextual parameter inspector.
-- **Live Species Matrix Editor:** Real-time color-coded heatmap grid to manipulate inter-species forces on the fly.
-- **Curated Preset Gallery:** Rich preset library across *Cosmic*, *Biological*, *Fluid Dynamics*, and *Abstract Math* categories with instant search and one-click application.
-- **Heads-Up Display (HUD) & Status:** Live FPS telemetry, frame time latency, entity counters, active seed, and renderer badge.
-
-### 4. Bilingual Localization & Modern Theming
-- **Bilingual Interface:** Full English (LTR) and Persian / Farsi (RTL) translations with native Right-to-Left layout mirroring.
-- **Typography:** Bundled high-legibility Vazirmatn Persian font and clean modern Latin sans-serif typography.
-- **Dark & Light Themes:** Layered charcoal dark theme and high-contrast light theme with live runtime switching.
-
-### 5. Local Persistence & High-Resolution Export
-- **SQLite Database:** Local settings, recent project tracking, and custom preset storage with Write-Ahead Logging (WAL).
-- **`.vanta` Project Format:** Safe, human-readable JSON project manifest with atomic replacement to prevent corruption.
-- **Lossless PNG & 4K Stills:** Offscreen rendering for crisp wallpapers and artwork exports.
-- **Video & Frame Sequences:** Deterministic frame-by-frame export to numbered PNG sequences or MP4 video via FFmpeg integration.
+- **Dual-Target Architecture**:
+  - **Web Studio**: Pure, zero-dependency ES6+ and Canvas 2D/WebGL running offline in any modern browser at 60 FPS.
+  - **Desktop Qt6**: Python PySide6 implementation with native OpenGL hardware acceleration and software rasterization fallbacks.
+  - **Native Launcher**: A 6KB native Windows launcher executable (`VANTA.exe`) launching Edge/Chrome in dedicated application mode.
+- **Direct Pointer Physics**:
+  - Left-click introduces gravitational wells, chemical seeds, or thermal heat sources.
+  - Right-click emanates high-velocity repulsive shockwaves.
+  - Smooth kinetic cursor ring with micro-vorticity feedback.
+- **Parametric Control Bus**:
+  - Dynamic parameter inspector custom-tailored to each engine with real-time bidirectional binding.
+  - Global environmental modifiers (viscosity, temperature, gravity, oxygen).
+- **Curated Preset System**:
+  - Instant one-click loading of stable, chaotic, and striking mathematical parameter configurations.
+- **Export Suite**:
+  - Instant 4K PNG snapshot captures with timestamped metadata.
+  - Hardware-accelerated 60 FPS WebM video recording via native `MediaRecorder` / `canvas.captureStream(60)`.
+- **Telemetry HUD**:
+  - Live framerate, frame render latency in milliseconds, entity counters, and coordinate telemetry.
+- **Bespoke Animated Startup Screen**:
+  - A 4.0-second non-blocking intro featuring a living harmonic particle field, custom architectural SVG emblem, analog film grain noise filter, and live kinetic telemetry counter.
 
 ---
 
-## System Requirements
+## Quick Start
 
-- **Operating System:** Windows 10/11 (64-bit), Linux (Ubuntu 22.04+), or macOS (12+).
-- **Processor:** Quad-Core 2.0 GHz or higher (runs smoothly on Intel Core i5 4th Gen+ / AMD Ryzen 3).
-- **Memory (RAM):** 8 GB minimum (includes dedicated **Lite Mode** for constrained memory).
-- **Graphics:** OpenGL 2.1+ compatible GPU or standard CPU software rendering fallback.
-- **Python:** Python 3.10 to 3.12 (Python 3.11.9 recommended).
+### 1. Windows (One-Click Launch)
+Double-click `VANTA.exe` in the root repository folder.
+- Launches the complete studio in dedicated standalone window mode (`1440x920`).
+- No Python installation or command-line setup required.
+- Alternatively, run `run.bat` or `.\run.ps1`.
 
----
-
-## Installation & Quick Start
-
-### Quick Launch on Windows
-Clone the repository and double-click `run.bat` or run in PowerShell:
-```powershell
-.\run.ps1
-```
-*If this is the first launch, the script will automatically create a local virtual environment (`.venv`), install dependencies, and start the studio.*
-
-### Manual Installation
+### 2. Browser (Cross-Platform)
+Clone the repository and open `studio/index.html` directly in any modern browser:
 ```bash
-# 1. Clone the repository
+git clone https://github.com/P0O1N0/VANTA.git
+cd VANTA
+# Windows:
+start studio/index.html
+# macOS:
+open studio/index.html
+# Linux:
+xdg-open studio/index.html
+```
+
+### 3. Python & PySide6 Desktop Environment
+For developers running or testing the Python codebase:
+```bash
+# Clone and setup environment
 git clone https://github.com/P0O1N0/VANTA.git
 cd VANTA
 
-# 2. Create and activate a virtual environment
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On Linux/macOS:
-source .venv/bin/activate
+# Run automated Windows setup
+setup.bat
 
-# 3. Install dependencies
+# Or manual setup:
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 4. Launch VANTA
+# Launch desktop application
 python -m vanta.main
+
+# Run test suite
+pytest
 ```
 
 ---
 
-## Controls and Shortcuts
+## Interactive Controls
 
-| Action | Control / Shortcut | Description |
+| Input | Action | Description |
 | :--- | :--- | :--- |
-| **Play / Pause** | `Space` / Top Bar Button | Toggle active simulation evolution |
-| **Single Step** | `S` / Top Bar Button | Advance simulation by a single discrete timestep |
-| **Reset** | `R` / Top Bar Button | Reset simulation to initial conditions |
-| **Fullscreen** | `F11` / `Esc` | Toggle full-canvas distraction-free mode |
-| **Export Work** | `E` / Top Bar Button | Open image and video export dialog |
-| **Interact (Left Click)** | Mouse Click / Drag | Attract particles / inject vortex / seed reactant |
-| **Interact (Right Click)**| Mouse Click / Drag | Repel particles / clear reactant area |
-| **Speed Multiplier** | Top Bar Slider | Adjust execution speed from 0.2x to 3.0x |
+| **Left Click + Drag** | **Attract / Inject** | Introduces gravity well, chemical seed, or thermal source |
+| **Right Click + Drag** | **Repel / Shockwave** | Disperses particles or deflects wavefronts |
+| <kbd>Space</kbd> | **Play / Pause** | Toggles simulation stepping without clearing state |
+| <kbd>N</kbd> | **Step Frame** | Advances simulation by one 16.6ms timestep |
+| <kbd>C</kbd> | **Reset** | Re-initializes active universe to default state |
+| <kbd>R</kbd> | **Re-Seed** | Randomizes initial coordinates and interaction matrices |
+| <kbd>M</kbd> / <kbd>Tab</kbd> | **Toggle Drawer** | Slides open or dismisses the 13-world catalog |
+| <kbd>P</kbd> | **Presets Modal** | Opens the curated preset configurations |
+| <kbd>Z</kbd> | **Zen Mode** | Hides all UI chrome for fullscreen visual display |
+| <kbd>T</kbd> | **Toggle Theme** | Cycles between deep obsidian dark and crisp light themes |
 
 ---
 
-## Performance Benchmarks
+## Documentation Suite
 
-Measured on a Windows 10 reference laptop (Intel 8-Core, 8 GB RAM, Integrated Graphics):
+Detailed architectural, scientific, and operational manuals are available in the [`docs/`](docs/) directory:
 
-| Simulation Engine | Entities / Grid | Updates / Sec (UPS) | Step Latency (ms) | Target FPS |
-| :--- | :--- | :--- | :--- | :--- |
-| **Flow Field** | 4,000 particles | **961.8 UPS** | **1.04 ms** | 60 FPS |
-| **Physarum (Slime Mold)**| 4,000 agents | **203.9 UPS** | **4.91 ms** | 60 FPS |
-| **Reaction-Diffusion** | 43,200 cells | **69.8 UPS** | **14.33 ms** | 60 FPS |
-| **Particle Life** | 1,500 particles | **34.0 UPS** | **29.44 ms** | 30–60 FPS |
+- [**Scientific Foundations (`docs/SCIENCE.md`)**](docs/SCIENCE.md) — Comprehensive derivations, partial differential equations, and discretization stencils for all 13 simulation engines.
+- [**System Architecture (`docs/ARCHITECTURE.md`)**](docs/ARCHITECTURE.md) — Dual-target architecture, event-loop coordination, Mermaid state diagrams, and memory layout.
+- [**User Guide (`docs/USER_GUIDE.md`)**](docs/USER_GUIDE.md) — Complete operational manual, parameter explanation, and media export workflows.
+- [**Installation Guide (`docs/INSTALLATION.md`)**](docs/INSTALLATION.md) — Step-by-step installation instructions across Windows, macOS, and Linux.
+- [**Performance Engineering (`docs/PERFORMANCE.md`)**](docs/PERFORMANCE.md) — Spatial grid partitioning, typed array layout, and 60 FPS stabilization benchmarks.
+- [**Developer Handbook (`docs/DEVELOPMENT.md`)**](docs/DEVELOPMENT.md) — Contributing guidelines, test execution, and instructions for authoring new simulation worlds.
+- [**Research Review (`docs/RESEARCH_REVIEW.md`)**](docs/RESEARCH_REVIEW.md) — Academic references, foundational papers, and algorithmic bibliography.
 
-To execute the benchmark suite on your own machine:
+---
+
+## Engineering Quality & Verification
+
+Every release of VANTA is verified through automated test suites:
+- **Pytest Suite (`pytest`)**: 29 automated tests verifying numerical solvers, QPainter / OpenGL offscreen rendering, and state persistence.
+- **Bundle Syntax Verifier (`python scripts/verify_bundle.py`)**: Validates bracket, parenthesis, and brace balancing across all 4,000+ lines of simulation code and ensures all 13 engine classes are properly registered.
+- **Continuous Integration**: GitHub Actions workflow running on both Ubuntu and Windows across Python 3.11 and 3.12.
+
 ```bash
-python scripts/benchmark.py --duration 2.0
+# Verify bundle integrity
+python scripts/verify_bundle.py
+# Output:
+# Braces: 696 vs 696
+# Parentheses: 1881 vs 1881
+# Square brackets: 704 vs 704
+# All 13 simulation worlds and classes verified successfully!
 ```
-
----
-
-## Running the Automated Test Suite
-
-VANTA includes a comprehensive test suite covering mathematical reproducibility, numerical stability, SQLite storage, atomic project serialization, and headless UI smoke tests:
-
-```bash
-# Run all tests
-pytest -v
-
-# Run only simulation engine tests
-pytest tests/unit/test_engines.py -v
-
-# Run storage and export tests
-pytest tests/unit/test_storage_and_export.py -v
-
-# Run UI smoke tests
-pytest tests/smoke/test_app_smoke.py -v
-```
-
----
-
-## Building Standalone Windows Executable
-
-To generate a self-contained Windows desktop distribution using PyInstaller:
-```powershell
-.\scripts\build_windows.ps1
-```
-The output directory will be created at `dist/VANTA/VANTA.exe`.
 
 ---
 
 ## Author & Attribution
 
-**VANTA — Generative Life Studio**  
-- **Author & Architect:** P O N  
+VANTA was created and engineered by:
+
+**P O N**  
+- **GitHub:** [@P0O1N0](https://github.com/P0O1N0)  
 - **Telegram:** [@P0O1N0](https://t.me/P0O1N0)  
-- **GitHub:** [github.com/P0O1N0](https://github.com/P0O1N0)  
-- **Repository:** [https://github.com/P0O1N0/VANTA](https://github.com/P0O1N0/VANTA)
+- **Repository:** [github.com/P0O1N0/VANTA](https://github.com/P0O1N0/VANTA)
 
 ---
 
 ## License
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for complete details.
+This project is licensed under the **MIT License**. See the [`LICENSE`](LICENSE) file for complete terms and copyright notices.

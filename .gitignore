@@ -49,24 +49,52 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# Environments
+# Environments & Secrets
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+credentials*
+id_rsa*
+id_ed25519*
 
-# Local VANTA runtime data (created during testing/running)
+# Local Databases, Logs & Runtime State
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.dump
+*.dmp
 .vanta_data/
 *.vanta.tmp
+exports/
+renders/
+recordings/
 
-# IDEs
+# Temporary video exports
+*.webm
+*.mp4
+*.mov
+
+# IDEs & Editors
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
+*.swp
+*~
 
 # OS-specific
 Thumbs.db

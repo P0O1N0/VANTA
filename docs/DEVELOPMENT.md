@@ -1,98 +1,109 @@
 # VANTA — Developer Guide & Contribution Handbook
 
+**Project:** VANTA — Generative Life Studio  
+**Creator:** P O N ([@P0O1N0](https://github.com/P0O1N0))  
+**Telegram:** [@P0O1N0](https://t.me/P0O1N0)
+
+---
+
 ## 1. Development Environment Setup
 
 ### Prerequisites
-- Python 3.10 to 3.12 (Python 3.11.9 recommended).
-- Windows 10/11, Linux (Ubuntu 22.04+), or macOS (12+).
-- Git.
+- Python 3.11+
+- Node.js (Optional, only if using external linters)
+- Modern web browser (Chrome, Edge, Firefox)
 
-### Quick Setup (Windows)
-Run the automated PowerShell setup script:
-```powershell
-.\setup.ps1
-```
-Or execute the batch script:
-```cmd
-setup.bat
-```
-
-### Manual Setup
+### Setup Steps
 ```bash
-# 1. Create a dedicated virtual environment
-python -m venv .venv
+git clone https://github.com/P0O1N0/VANTA.git
+cd VANTA
 
-# 2. Activate virtual environment
-# Windows PowerShell:
-.venv\Scripts\Activate.ps1
-# Windows CMD:
-.venv\Scripts\activate.bat
-# Linux/macOS:
+# Setup Python virtual environment
+python -m venv .venv
+# On Windows:
+.venv\Scripts\activate
+# On Linux/macOS:
 source .venv/bin/activate
 
-# 3. Upgrade pip and install pinned dependencies
 pip install -r requirements.txt
-
-# 4. Install project in editable mode
-pip install -e .
 ```
 
 ---
 
-## 2. Launching the Studio
+## 2. Running Automated Tests & Verification
 
-Run the application through the provided launchers:
-```powershell
-.\run.ps1
-```
-Or in Python directly:
+### Pytest Unit Test Suite
 ```bash
-python -m vanta.main
-```
-
----
-
-## 3. Running Automated Tests
-
-VANTA ships with unit, integration, and smoke test suites:
-```bash
-# Run all tests
 pytest
-
-# Run tests with verbose output
-pytest -v
-
-# Run only simulation tests
-pytest tests/unit/test_engines.py
-
-# Run UI smoke tests
-pytest tests/smoke/test_app_smoke.py
 ```
+Runs all 29 automated tests verifying:
+- Simulation mathematical logic
+- QPainter / OpenGL offscreen rendering
+- Splash screen event-loop coordination
+- Project state serialization and preset integrity
+
+### Studio Bundle Verification
+```bash
+python scripts/verify_bundle.py
+```
+Validates bracket, brace, and parenthesis balance in `studio/js/bundle.js` and verifies that all 13 world classes are registered and instantiated.
 
 ---
 
-## 4. How to Implement a New Simulation Engine
+## 3. Creating a New Simulation Engine
 
-1. Create a new module in `src/vanta/core/engines/<my_engine>.py`.
-2. Inherit from `BaseEngine` (`src/vanta/core/base_engine.py`).
-3. Implement the required lifecycle methods:
-   - `initialize(width, height, seed)`
-   - `step(dt)`
-   - `reset()`
-   - `get_render_data()`
-   - `get_parameters()`
-   - `set_parameters(params)`
-   - `interact(x, y, button, mode)`
-4. Register your engine in `src/vanta/core/engine_registry.py`.
-5. Add curated presets in `src/vanta/presets/library.py`.
-6. Add English and Persian translation keys in `localization/en.py` and `localization/fa.py`.
+To add a new simulation world to VANTA:
+
+1. **Define the Engine Class** in `studio/js/bundle.js`:
+   ```javascript
+   class MyNewEngine {
+     constructor(canvas) {
+       this.canvas = canvas;
+       this.ctx = canvas.getContext('2d');
+       // Allocate typed arrays or state buffers
+     }
+
+     init(seed = 12345) {
+       // Seed initial state
+     }
+
+     step(dt, mouse, environment) {
+       // Numerical physics update
+     }
+
+     render() {
+       // Rasterize to this.ctx
+     }
+   }
+   ```
+
+2. **Register Metadata in `WORLDS`**:
+   ```javascript
+   {
+     id: "my_new_world",
+     name: "My New Universe",
+     category: "physics", // "biology" | "physics" | "chaos"
+     tag: "Sub-Title Tag",
+     badge: "Archetype Badge",
+     desc: "Description of the physical or mathematical model.",
+     physics: "Governing PDE or equation"
+   }
+   ```
+
+3. **Instantiate Engine in `VantaStudioApp`**:
+   Add to `this.engines` map in `VantaStudioApp` constructor.
+
+4. **Add Parameter Sliders** in `renderInspector()`:
+   Connect interactive controls to your engine's state variables.
+
+5. **Verify Bundle**:
+   Run `python scripts/verify_bundle.py` to ensure syntax integrity.
 
 ---
 
-## 5. Building the Windows Standalone Executable
+## 4. Code Style & Architecture Guidelines
 
-To generate a standalone Windows distribution using PyInstaller:
-```powershell
-.\scripts\build_windows.ps1
-```
-The resulting executable will be placed in `dist/VANTA/VANTA.exe`.
+- **No Framework Overhead:** The Web Studio engine relies strictly on clean, dependency-free ECMAScript 2022+ and Canvas 2D/WebGL.
+- **Zero Transient Allocation in Render Loops:** Never create temporary `{ x, y }` objects or arrays inside per-frame `step()` or `render()` methods. Mutate pre-allocated typed arrays.
+- **Maintain Determinism:** Numerical seeds should yield reproducible initial configurations whenever possible.
+- **Maintain Safe Parameter Boundaries:** Always clamp inputs to mathematically stable regimes to prevent numerical overflow ($\text{NaN} / \infty$).

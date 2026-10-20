@@ -4033,5 +4033,12 @@ class VantaStudioApp {
 
 // Bootstrap on DOM ready
 window.addEventListener('DOMContentLoaded', () => {
-  new VantaStudioApp();
+  if (!window.studio) {
+    window.studio = new VantaStudioApp();
+  }
 });
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  if (!window.studio) {
+    window.studio = new VantaStudioApp();
+  }
+}

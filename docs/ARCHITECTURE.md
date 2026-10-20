@@ -1,223 +1,180 @@
-# VANTA — System Architecture & Design Specification
+# VANTA — System Architecture & Engineering Design
 
-**Document Version:** 1.0.0  
 **Project:** VANTA — Generative Life Studio  
-**Target Platform:** Windows 10/11 Desktop (with portable Linux and macOS support)
+**Author:** P O N ([@P0O1N0](https://github.com/P0O1N0))  
+**Repository:** [github.com/P0O1N0/VANTA](https://github.com/P0O1N0/VANTA)  
+**Supported Runtimes:** Windows 10/11 Desktop, PySide6 Qt6, Modern Web Browsers (Chrome / Edge / Firefox)
 
 ---
 
-## 1. System Overview
+## 1. Architectural Philosophy
 
-VANTA is engineered as a modular, offline-first generative simulation studio. Its architecture strictly separates:
-1. **Simulation Domain:** Mathematical and numerical evolution of particle/agent/field states.
-2. **Rendering Domain:** Hardware-accelerated OpenGL and software QPainter rasterization pipelines.
-3. **Application Domain:** Local SQLite persistence, project `.vanta` serialization, preset management, and export.
-4. **Presentation Domain:** PySide6 user interface, responsive layout, theme tokens, and bilingual (English LTR / Persian RTL) localization.
+VANTA is architected as an offline-first, dual-target generative life and physical simulation studio. Its engineering design strictly separates:
+1. **Mathematical Simulation Core:** Discrete particle systems, partial differential equation solvers, lattice automata, and agent-based spatial models.
+2. **Rendering & Compositing Pipeline:** High-performance Canvas 2D / WebGL rasterization with pixel-manipulation buffers and QPainter desktop fallbacks.
+3. **Control & Parameter Dispatch:** Dynamic bi-directional parameter bus supporting live continuous adjustment, state serialization, and preset loading.
+4. **Presentation & Studio Shell:** Modernist dark-mode UI with floating HUD telemetry, responsive worlds drawer, and hardware-accelerated WebM video and PNG snapshot exporters.
 
 ```mermaid
 flowchart TD
-    subgraph UI ["Presentation Layer (PySide6)"]
-        MW[MainWindow] --> TopBar[TopBar Controls]
-        MW --> Nav[Navigation Rail]
-        MW --> Canvas[Simulation Canvas]
-        MW --> Inspector[Parameter Inspector]
-        MW --> PresetBrowser[Preset Browser]
-        MW --> StatusBar[Performance Status Bar]
+    subgraph LAUNCH ["Launch & Orchestration"]
+        EXE["VANTA.exe (Native Windows Launcher)"] -->|Web Mode| WEB["Web Studio Shell (Chromium / Edge App)"]
+        EXE -->|Qt Mode| QT["Desktop GUI (PySide6 / Qt6)"]
     end
 
-    subgraph RENDER ["Rendering Pipeline"]
-        Canvas --> BR{BaseRenderer}
-        BR -->|Preferred| OGL[OpenGLRenderer]
-        BR -->|Fallback / Headless| SWR[SoftwareRenderer]
+    subgraph STUDIO ["VANTA Studio Engine"]
+        APP["VantaStudioApp"]
+        HUD["Live HUD & Telemetry"]
+        DRAWER["Worlds Navigation Drawer (13 Archetypes)"]
+        INSP["Parameter Inspector & Preset Manager"]
+        EXP["Exporter (WebM 60FPS / 4K PNG)"]
     end
 
-    subgraph CORE ["Simulation Engines (NumPy / SciPy)"]
-        ER[EngineRegistry] --> PL[ParticleLifeEngine]
-        ER --> PH[PhysarumEngine]
-        ER --> FF[FlowFieldEngine]
-        ER --> RD[ReactionDiffusionEngine]
+    subgraph SOLVERS ["13 Mathematical Simulation Solvers"]
+        direction TB
+        E1["ParticleLifeEngine (Asymmetric Matrix F(r))"]
+        E2["PhysarumEngine (Jones Chemo-Taxis & Diffusion)"]
+        E3["CosmicGravityEngine (Barnes-Hut & Plummer Softening)"]
+        E4["BoidsSwarmEngine (Reynolds Flocking Triad)"]
+        E5["QuantumWaveEngine (TDSE Leapfrog Finite Difference)"]
+        E6["CrystalGrowthEngine (Kobayashi Phase-Field Solidification)"]
+        E7["FlowFieldEngine (Incompressible Curl Noise Advection)"]
+        E8["ReactionDiffusionEngine (Gray-Scott Autocatalytic PDEs)"]
+        E9["LeniaEngine (Continuous Cellular Automata)"]
+        E10["FerrofluidEngine (Rosensweig Magnetic Peak Solvers)"]
+        E11["FractalGrowthEngine (Diffusion-Limited Aggregation DLA)"]
+        E12["ExcitableMediumEngine (FitzHugh-Nagumo Spiral Waves)"]
+        E13["ThermalConvectionEngine (Rayleigh-Bénard Navier-Stokes)"]
     end
 
-    subgraph STORAGE ["Local Persistence & Export"]
-        DB[(SQLite Database)]
-        PM[ProjectManager - .vanta]
-        PRE[PresetLibrary]
-        EXP[ExportPipeline]
+    subgraph RENDER ["Rendering & Canvas Viewport"]
+        CANVAS["Primary Simulation Viewport (#simCanvas)"]
+        CTX["Optimized Direct Pixel & Vector Rasterizer"]
     end
 
-    TopBar -->|Play/Pause/Step/Speed| ER
-    Inspector -->|Parameters / Matrix| ER
-    ER -->|Render Data| BR
-    MW --> DB
-    MW --> PM
-    PresetBrowser --> PRE
-    TopBar --> EXP
+    WEB --> APP
+    QT --> APP
+    APP --> HUD
+    APP --> DRAWER
+    APP --> INSP
+    APP --> EXP
+    APP --> SOLVERS
+    SOLVERS --> CANVAS
+    CANVAS --> CTX
 ```
 
 ---
 
-## 2. Directory and Module Organization
+## 2. Dual-Target Runtime Architecture
 
+### A. Web Studio (`studio/index.html`, `studio/js/bundle.js`, `studio/css/style.css`)
+- **Engine Container:** Zero-dependency vanilla ES6+ architecture executing at native browser speed.
+- **Rendering Loop:** Synchronized with `requestAnimationFrame` maintaining smooth 60 FPS update cycles.
+- **Pixel Pipeline:** Hybrid vector drawing (paths, glow arcs, trajectories) and direct `ImageData` typed array manipulation (`Uint32Array` buffers) for cellular and field PDE simulations.
+- **Zero Latency:** No cloud dependencies, no tracking scripts, completely functional offline and portable.
+
+### B. Desktop Qt6 App (`src/vanta/`, `vanta.main`)
+- **Framework:** PySide6 (Qt 6.6+) with decoupled QThread simulation workers.
+- **Packaging:** Standalone executable buildable with PyInstaller or launchable directly via `.venv`.
+- **Hardware Acceleration:** Native OpenGL widget rendering with QPainter fallback.
+
+### C. Native Launcher (`VANTA.exe`)
+- Ultra-lightweight 6KB compiled C# launcher (`scripts/Launcher.cs`) targeting `.NET Framework 4.0+`.
+- Seamlessly resolves local Edge or Chrome installations to launch the studio in dedicated `--app` window mode (`1440x920`), offering a desktop-native application feel.
+
+---
+
+## 3. Simulation Core & Engine Lifecycle
+
+Every simulation engine implements a uniform contract:
+```typescript
+interface SimulationEngine {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  init(): void;
+  update(dt: number, mouse: MouseState): void;
+  render(): void;
+  reset(): void;
+  applyPreset(presetId: string): void;
+  setParam(key: string, value: number): void;
+}
 ```
-src/vanta/
-├── __init__.py                 # Package version and metadata
-├── main.py                     # CLI and application startup entrypoint
-├── app.py                      # VantaApplication runtime lifecycle coordinator
-├── config/
-│   ├── __init__.py
-│   └── settings.py             # Global constants, paths, default parameters
-├── core/
-│   ├── __init__.py
-│   ├── base_engine.py          # Abstract BaseEngine contract
-│   ├── engine_registry.py      # Engine catalog and factory
-│   └── engines/
-│       ├── __init__.py
-│       ├── particle_life.py    # Multi-species continuous particle life
-│       ├── physarum.py         # Slime mold agent sensory-motor system
-│       ├── flow_field.py       # Curl noise procedural vector field
-│       └── reaction_diffusion.py # Gray-Scott 2D concentration dynamics
-├── rendering/
-│   ├── __init__.py
-│   ├── base.py                 # Abstract BaseRenderer interface
-│   ├── opengl_renderer.py      # QOpenGLWidget shader/point batch renderer
-│   ├── software_renderer.py    # QPainter software fallback rasterizer
-│   └── palettes.py             # Scientific and artistic color palettes
-├── ui/
-│   ├── __init__.py
-│   ├── main_window.py          # Main studio workspace window
-│   ├── canvas.py               # Viewport widget hosting renderer
-│   ├── components/
-│   │   ├── __init__.py
-│   │   ├── top_bar.py          # Header controls (play/pause/theme/i18n/export)
-│   │   ├── navigation_rail.py  # Left engine selector & drawer
-│   │   ├── inspector.py        # Dynamic parameter controls & sliders
-│   │   ├── matrix_editor.py    # Interactive species interaction matrix
-│   │   ├── preset_browser.py   # Visual preset gallery with filter/search
-│   │   ├── hud_overlay.py      # Real-time metrics and HUD
-│   │   └── toast.py            # Floating notification banners
-│   ├── dialogs/
-│   │   ├── __init__.py
-│   │   ├── about_dialog.py     # Attribution and system information
-│   │   ├── export_dialog.py    # Still and video export settings
-│   │   └── settings_dialog.py  # Quality and application settings
-│   └── themes/
-│       ├── __init__.py
-│       ├── tokens.py           # Color palette, spacing, and font constants
-│       └── style.py            # QSS stylesheet generators (Dark & Light)
-├── storage/
-│   ├── __init__.py
-│   ├── database.py             # SQLite manager with WAL mode
-│   └── migrations.py           # Incremental schema migration engine
-├── projects/
-│   ├── __init__.py
-│   └── project_manager.py      # Safe .vanta JSON serialization & validation
-├── presets/
-│   ├── __init__.py
-│   ├── library.py              # Curated factory presets across 4 engines
-│   └── preset_manager.py       # Custom user preset storage and management
-├── export/
-│   ├── __init__.py
-│   ├── image_exporter.py       # Lossless PNG & high-res renderer
-│   └── video_exporter.py       # Sequence and MP4 frame dispatcher
-├── localization/
-│   ├── __init__.py
-│   ├── i18n.py                 # Internationalization manager
-│   ├── en.py                   # English language dictionary
-│   └── fa.py                   # Persian (Farsi) language dictionary
-└── utilities/
-    ├── __init__.py
-    ├── platform_detector.py    # Hardware, GPU, RAM, and OS inspection
-    ├── logger.py               # Rotating file and console logger
-    └── noise.py                # Fast 2D Perlin / Simplex / curl noise
+
+### Lifecycle State Machine
+```mermaid
+stateDiagram-v2
+    [*] --> StartupScreen : Launch Application
+    StartupScreen --> EngineInitialization : 4.0s Bespoke Telemetry
+    EngineInitialization --> SimulationRunning : Initialize Selected World
+    
+    state SimulationRunning {
+        [*] --> PhysicsStep : requestAnimationFrame
+        PhysicsStep --> DirectPointerInteraction : Mouse / Gravity Force
+        DirectPointerInteraction --> CanvasRasterization : Draw Frame
+        CanvasRasterization --> TelemetryUpdate : Update FPS / Entity Count
+        TelemetryUpdate --> PhysicsStep
+    }
+
+    SimulationRunning --> WorldTransition : User Selects World from Drawer
+    WorldTransition --> EngineInitialization : Reinitialize Canvas & Grid
+    SimulationRunning --> Paused : Spacebar / Pause Button
+    Paused --> SimulationRunning : Resume
 ```
 
 ---
 
-## 3. Core Engine Lifecycle Contract (`BaseEngine`)
+## 4. Parameter Dispatch & State Management
 
-Every simulation engine inherits from `BaseEngine` and adheres to a strict contract:
+Parameters are exposed declaratively through world manifests. When a user selects a world:
+1. `renderInspector()` queries the active engine for its customizable parameters, ranges, and current values.
+2. Sliders and toggle controls are generated dynamically with real-time bidirectional binding.
+3. User interactions (e.g. adjusting Rayleigh number $Ra$, Gray-Scott feed rate $F$, or Particle Life friction $\gamma$) mutate the engine state directly without garbage-collection overhead.
+4. Presets are stored as JSON configurations that re-seed state arrays and reset parameter groups deterministically.
 
-```python
-class BaseEngine(ABC):
-    @abstractmethod
-    def initialize(self, width: int, height: int, seed: int | None = None) -> None:
-        """Initialize or reseed simulation buffers."""
-        pass
+---
 
-    @abstractmethod
-    def step(self, dt: float) -> None:
-        """Advance the simulation state by a fixed timestep dt."""
-        pass
+## 5. Media & Export Pipeline
 
-    @abstractmethod
-    def reset(self) -> None:
-        """Reset the simulation back to initial conditions."""
-        pass
+VANTA includes high-resolution export pipelines operating directly in the browser:
+- **PNG Snapshots:** Renders the simulation viewport to an offscreen canvas at device pixel ratio, applying watermark telemetry and downloading timestamped PNGs (`VANTA_<world>_<timestamp>.png`).
+- **WebM Video Recorder:** Leverages the native `MediaStream` and `MediaRecorder` API (`canvas.captureStream(60)`), recording smooth VP9 / VP8 60 FPS video clips directly to disk.
 
-    @abstractmethod
-    def get_render_data(self) -> RenderData:
-        """Return renderable primitives (particles, vectors, or field texture)."""
-        pass
+---
 
-    @abstractmethod
-    def get_parameters(self) -> dict[str, Any]:
-        """Return current dictionary of configurable parameters."""
-        pass
+## 6. Directory Layout & Module Structure
 
-    @abstractmethod
-    def set_parameters(self, params: dict[str, Any]) -> None:
-        """Validate and apply updated parameters."""
-        pass
-
-    @abstractmethod
-    def interact(self, x: float, y: float, button: int, mode: str) -> None:
-        """Handle canvas mouse clicks or drag gestures."""
-        pass
+```text
+VANTA/
+├── VANTA.exe               # 6KB native C# application launcher
+├── pyproject.toml          # Python project metadata & dependencies
+├── requirements.txt        # Pinned Python package dependencies
+├── setup.bat / setup.ps1   # Automated Windows environment setup
+├── run.bat / run.ps1       # One-click startup scripts
+├── LICENSE                 # MIT License (Author: P O N)
+├── studio/                 # High-performance generative studio
+│   ├── index.html          # Clean HTML5 studio shell & splash screen
+│   ├── css/style.css       # Obsidian luxury theme & responsive layout
+│   └── js/bundle.js        # Complete 13 simulation engines & studio app
+├── src/vanta/              # Python PySide6 desktop application
+│   ├── app.py              # Main application coordinator
+│   ├── main.py             # Python entry point
+│   ├── config/             # System settings & author metadata
+│   ├── core/engines/       # Python simulation engines
+│   ├── rendering/          # OpenGL & software renderers
+│   └── ui/                 # Qt widgets, HUD, and splash screen
+├── tests/                  # Test suite
+│   ├── smoke/              # Startup and import checks
+│   └── unit/               # Engine and widget unit tests (pytest)
+├── scripts/                # Verification, build, and launcher sources
+│   ├── Launcher.cs         # C# source for VANTA.exe
+│   └── verify_bundle.py    # Syntax, bracket, and engine integrity check
+└── docs/                   # Documentation & research suite
+    ├── ARCHITECTURE.md     # Software architecture (this document)
+    ├── SCIENCE.md          # Mathematical formulas and physical derivations
+    ├── INSTALLATION.md     # Step-by-step setup guide
+    ├── USER_GUIDE.md       # Interactive controls & user manual
+    ├── PERFORMANCE.md      # Performance benchmarks & optimization
+    ├── DEVELOPMENT.md      # Developer guide & engine authoring
+    ├── RESEARCH_REVIEW.md  # Scientific papers & foundational literature
+    └── screenshots/        # High-resolution genuine captures
 ```
-
-### Determinism and Reproducibility
-Every engine uses NumPy's modern `np.random.Generator(np.random.PCG64(seed))`. When initialized with the exact same seed and parameters, every engine generates identical initial conditions and evolves identically under fixed timesteps ($\Delta t$).
-
----
-
-## 4. Dual Rendering Architecture
-
-Rendering is decoupled from simulation state via `RenderData`:
-- `RenderData.mode`: `'particles'` (positions, colors, radii), `'field'` (2D scalar/RGB array for continuous diffusion/density), or `'hybrid'`.
-- `OpenGLRenderer`: Inherits from `QOpenGLWidget`. Utilizes point sprites or textured quads for high frame rates on dedicated or integrated GPUs.
-- `SoftwareRenderer`: Inherits from `QWidget`. Employs `QPainter` drawing directly onto memory-mapped `QImage` buffers, guaranteeing universal fallback on any CPU or virtualized environment.
-
----
-
-## 5. Storage and Serialization
-
-### SQLite Database (`vanta.db`)
-- Created at `%LOCALAPPDATA%\VANTA\vanta.db` on Windows (with portable fallbacks).
-- Stores application preferences (theme, language, quality profile, last window geometry).
-- Tracks recent projects, custom presets, and export history.
-- Protected against corruption via SQLite WAL mode and atomic transactions.
-
-### Project Files (`.vanta`)
-- Encoded as UTF-8 JSON.
-- Contains metadata, engine ID, random seed, parameter dict, color palette, and optional state snapshot.
-- Deserialization is protected against arbitrary code execution (no `pickle` or `eval`).
-
----
-
-## 6. Bilingual Localization & RTL Layout
-
-- Supports **English (LTR)** and **Persian (RTL)**.
-- Switching language changes:
-  1. Window layout direction via `QApplication.setLayoutDirection()`.
-  2. Dynamic re-translation of all user-facing strings, buttons, tooltips, dialogs, and HUD indicators.
-- Persian typography utilizes the bundled/system Vazirmatn font for maximum legibility.
-
----
-
-## 7. Performance & Quality Profiles
-
-VANTA defines three explicit quality profiles:
-1. **Lite:** Lower particle limits (e.g. 500-1000), simpler rendering, reduced trail persistence. Ideal for low-spec dual/quad-core laptops with 8 GB RAM.
-2. **Balanced (Default):** Moderate agent density (1500-2500), smooth trails, optimized spatial hashing. Stable 60 FPS on typical machines.
-3. **High:** Maximum density (3000-5000+), high-resolution trail fields, richest color blending.
-- **Adaptive Quality:** If FPS drops below 25 for sustained frames, VANTA automatically dampens visual effects to maintain responsive interaction.

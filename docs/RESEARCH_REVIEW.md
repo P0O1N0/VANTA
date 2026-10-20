@@ -1,8 +1,10 @@
-# VANTA — Research Review & Architectural Foundations
+# VANTA — Research Review & Scientific Foundations
 
-**Research Date:** October 2026  
-**Document Author:** VANTA Engineering Team  
-**Scope:** Generative Art, Artificial Life Algorithms, High-Performance Numerical Simulation, PySide6 Desktop Integration, Graphics Rendering Pipelines, Modern Design Systems, and Persian RTL Typography.
+**Document Version:** 2.0.0  
+**Project:** VANTA — Generative Life Studio  
+**Creator:** P O N ([@P0O1N0](https://github.com/P0O1N0))  
+**Telegram:** [@P0O1N0](https://t.me/P0O1N0)  
+**Scope:** Generative Systems, Artificial Life Algorithms, Non-Linear Dynamics, Fluid Solvers, and Interactive Computational Physics.
 
 ---
 
