@@ -24,10 +24,9 @@ class Toast(QFrame):
         )
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 6, 8, 6)
+        layout.setContentsMargins(12, 8, 12, 8)
 
-        icon = "⚠" if is_error else "✓"
-        lbl = QLabel(f"{icon}  {message}")
+        lbl = QLabel(message)
         lbl.setStyleSheet(f"color: {text_color}; font-size: 12px; font-weight: 500;")
         layout.addWidget(lbl)
 

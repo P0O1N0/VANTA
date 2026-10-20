@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import numpy as np
 from PySide6.QtCore import Qt, QRectF
-from PySide6.QtGui import QImage, QPainter
+from PySide6.QtGui import QColor, QImage, QPainter
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QWidget
 
@@ -35,7 +35,10 @@ class OpenGLRenderer(QOpenGLWidget, BaseRenderer):
             GL.glClearColor(0.03, 0.04, 0.055, 1.0)
             GL.glEnable(GL.GL_BLEND)
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            GL.glEnable(GL.GL_POINT_SMOOTH)
+            try:
+                GL.glEnable(GL.GL_POINT_SMOOTH)
+            except Exception:
+                pass
             self._gl_initialized = True
             logger.info("OpenGL context initialized successfully.")
         except Exception as exc:
@@ -126,12 +129,10 @@ class OpenGLRenderer(QOpenGLWidget, BaseRenderer):
             if colors is not None and len(colors) == N:
                 for i in range(N):
                     c = colors[i]
-                    painter.setBrush(Qt.GlobalColor.white if len(c) < 3 else QPainter.setBrush)
-                    painter.setBrush(painter.brush().color())
-                    painter.setBrush(c[0] if False else Qt.GlobalColor.transparent)
-                    # Directly draw ellipse
-                    painter.fillRect(QRectF(xs[i], ys[i], pt_size, pt_size), Qt.GlobalColor.cyan)
+                    painter.setBrush(QColor(int(c[0]), int(c[1]), int(c[2]), int(c[3]) if len(c) > 3 else 255))
+                    painter.drawEllipse(QRectF(xs[i], ys[i], pt_size, pt_size))
             else:
+                painter.setBrush(QColor(0, 245, 212, 220))
                 for i in range(N):
                     painter.drawEllipse(QRectF(xs[i], ys[i], pt_size, pt_size))
 

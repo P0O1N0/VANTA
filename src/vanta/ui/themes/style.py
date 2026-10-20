@@ -40,22 +40,26 @@ def generate_stylesheet(theme_name: str = "dark") -> str:
     QFrame#panelFrame {{
         background-color: {tokens.bg_surface};
         border: 1px solid {tokens.border_subtle};
-        border-radius: 6px;
+        border-radius: 8px;
     }}
 
     QGroupBox {{
-        font-weight: bold;
-        border: 1px solid {tokens.border_subtle};
-        border-radius: 6px;
-        margin-top: 14px;
-        padding-top: 14px;
-        background-color: {tokens.bg_surface};
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+        border-bottom: 1px solid {tokens.border_subtle};
+        margin-top: 12px;
+        padding-top: 10px;
+        padding-bottom: 8px;
+        background-color: transparent;
     }}
     QGroupBox::title {{
         subcontrol-origin: margin;
         subcontrol-position: top left;
-        padding: 0 6px;
-        color: {tokens.text_secondary};
+        padding: 0 2px;
+        color: {tokens.accent_secondary};
     }}
 
     /* Buttons */

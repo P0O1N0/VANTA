@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VANTA — Generative Life Studio</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body dir="rtl">
+
+  <!-- Interactive Simulation Canvas -->
+  <div id="viewport-container">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- Mouse Reactive Cursor Glow Ring -->
+  <div id="cursor-ring"></div>
+
+  <!-- Floating Studio UI Chrome -->
+  <div id="studio-ui">
+
+    <!-- Top Control Bar -->
+    <header id="topbar" class="glass">
+      <div class="brand-section">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title" data-i18n="app_title">VANTA</div>
+          <div class="brand-descriptor" data-i18n="app_descriptor">استودیوی حیات مولد</div>
+        </div>
+      </div>
+
+      <!-- Engine Tabs -->
+      <nav class="engine-tabs">
+        <button class="engine-tab active" data-engine="particle_life">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v2"></path><path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path><path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <span data-i18n="engine_particle_life">حیات ذرات</span>
+        </button>
+
+        <button class="engine-tab" data-engine="physarum">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+          </svg>
+          <span data-i18n="engine_physarum">فیزاروم</span>
+        </button>
+
+        <button class="engine-tab" data-engine="flow_field">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h20"></path><path d="M20 12l-4-4"></path><path d="M20 12l-4 4"></path>
+            <path d="M6 8c2-3 6-3 8 0"></path><path d="M10 16c2 3 6 3 8 0"></path>
+          </svg>
+          <span data-i18n="engine_flow_field">میدان جریان</span>
+        </button>
+
+        <button class="engine-tab" data-engine="reaction_diffusion">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2v7.31"></path><path d="M14 9.3V1.99"></path>
+            <path d="M8.5 2h7"></path>
+            <path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>
+            <circle cx="12" cy="15" r="1"></circle>
+          </svg>
+          <span data-i18n="engine_reaction_diffusion">واکنش-پخش</span>
+        </button>
+      </nav>
+
+      <!-- Global Playback & Studio Controls -->
+      <div class="controls-group">
+        <button id="btn-play" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          <span class="btn-label" data-i18n="btn_pause">توقف</span>
+        </button>
+
+        <button id="btn-step" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+            <line x1="19" y1="5" x2="19" y2="19"></line>
+          </svg>
+          <span data-i18n="btn_step">یک گام</span>
+        </button>
+
+        <button id="btn-reset" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          <span data-i18n="btn_reset">بازنشانی</span>
+        </button>
+
+        <button id="btn-seed" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <circle cx="15.5" cy="15.5" r="1.5"></circle>
+          </svg>
+          <span data-i18n="btn_seed">سید تصادفی</span>
+        </button>
+
+        <!-- Speed -->
+        <div style="display: flex; align-items: center; gap: 8px; margin: 0 4px;">
+          <input type="range" id="speedSlider" min="0.2" max="3.0" step="0.1" value="1.0" style="width: 75px;">
+          <span id="speedValue" style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; min-width: 28px;">1.0x</span>
+        </div>
+
+        <button id="btn-presets" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span data-i18n="btn_presets">الگوها</span>
+        </button>
+
+        <!-- Export -->
+        <button id="btn-export" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          <span data-i18n="btn_export">خروجی ۴K</span>
+        </button>
+
+        <button id="btn-record" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
+          </svg>
+          <span class="btn-label" data-i18n="btn_record">ضبط ویدیو</span>
+        </button>
+
+        <!-- Theme & Lang -->
+        <button id="btn-theme" class="btn btn-icon" title="Toggle Dark/Light Theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+
+        <button id="btn-lang" class="btn btn-icon" title="تغییر زبان / Switch Language" style="font-weight: 700; font-size: 11px;">
+          <span data-i18n="btn_lang">EN</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main id="workspace">
+      <div></div> <!-- Left spacing -->
+
+      <!-- Right Inspector Panel -->
+      <aside id="inspector" class="glass">
+        <div class="panel-header">
+          <span class="panel-title" data-i18n="inspector_title">پارامترهای شبیه‌سازی</span>
+        </div>
+        <div id="inspector-controls" class="panel-content">
+          <!-- Dynamic parameter controls generated via app.js -->
+        </div>
+      </aside>
+    </main>
+
+    <!-- Heads Up Telemetry Display (HUD) -->
+    <footer id="hud-overlay" class="glass">
+      <div class="hud-item">
+        <div class="fps-dot"></div>
+        <span data-i18n="status_fps">FPS</span>:
+        <span id="hud-fps" class="hud-val">60</span>
+      </div>
+      <div class="hud-item">
+        <span data-i18n="status_latency">تاخیر</span>:
+        <span id="hud-latency" class="hud-val">16.6ms</span>
+      </div>
+      <div class="hud-item">
+        <span data-i18n="status_entities">موجودیت‌ها</span>:
+        <span id="hud-entities" class="hud-val">2,400</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Presets Gallery Modal -->
+  <div id="presets-modal" class="modal-overlay">
+    <div class="modal-dialog glass">
+      <div class="panel-header">
+        <span class="panel-title" data-i18n="modal_presets_title">گالری الگوهای شبیه‌سازی</span>
+        <button id="close-presets" class="btn btn-icon" style="height: 28px; width: 28px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="presets-grid" class="preset-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Bootstrap -->
+  <script src="js/bundle.js"></script>
+</body>
+</html>

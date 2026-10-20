@@ -13,77 +13,109 @@ namespace VantaLauncher
             try
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                string venvPythonW = Path.Combine(baseDir, ".venv", "Scripts", "pythonw.exe");
+                string studioHtml = Path.Combine(baseDir, "studio", "index.html");
                 string distExe = Path.Combine(baseDir, "dist", "VANTA", "VANTA.exe");
+                string venvPythonW = Path.Combine(baseDir, ".venv", "Scripts", "pythonw.exe");
                 string mainPy = Path.Combine(baseDir, "src", "vanta", "main.py");
-                string setupBat = Path.Combine(baseDir, "setup.bat");
 
-                ProcessStartInfo psi = new ProcessStartInfo();
-                psi.WorkingDirectory = baseDir;
-
-                if (File.Exists(distExe))
+                bool forceQt = false;
+                if (args != null)
                 {
-                    psi.FileName = distExe;
-                    psi.WorkingDirectory = Path.Combine(baseDir, "dist", "VANTA");
-                    psi.UseShellExecute = false;
-                }
-                else if (File.Exists(venvPythonW) && File.Exists(mainPy))
-                {
-                    psi.FileName = venvPythonW;
-                    psi.Arguments = "-m vanta.main";
-                    string existingPythonPath = Environment.GetEnvironmentVariable("PYTHONPATH");
-                    string srcDir = Path.Combine(baseDir, "src");
-                    if (!string.IsNullOrEmpty(existingPythonPath))
+                    foreach (string arg in args)
                     {
-                        psi.EnvironmentVariables["PYTHONPATH"] = srcDir + ";" + existingPythonPath;
+                        if (arg.Equals("--qt", StringComparison.OrdinalIgnoreCase) ||
+                            arg.Equals("--pyside", StringComparison.OrdinalIgnoreCase) ||
+                            arg.Equals("--desktop", StringComparison.OrdinalIgnoreCase))
+                        {
+                            forceQt = true;
+                            break;
+                        }
+                    }
+                }
+
+                // If Qt is not explicitly requested and studio/index.html exists, launch modern WebGL/Canvas Studio
+                if (!forceQt && File.Exists(studioHtml))
+                {
+                    string fileUri = "file:///" + studioHtml.Replace('\\', '/');
+
+                    string[] browserCandidates = new string[]
+                    {
+                        @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                        @"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+                        @"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                        @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Microsoft\Edge\Application\msedge.exe"),
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Google\Chrome\Application\chrome.exe")
+                    };
+
+                    string chosenBrowser = null;
+                    foreach (string path in browserCandidates)
+                    {
+                        if (File.Exists(path))
+                        {
+                            chosenBrowser = path;
+                            break;
+                        }
+                    }
+
+                    if (chosenBrowser != null)
+                    {
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = chosenBrowser,
+                            Arguments = string.Format("--app=\"{0}\" --window-size=1440,920 --disable-pinch", fileUri),
+                            WorkingDirectory = baseDir,
+                            UseShellExecute = false
+                        };
+                        Process.Start(psi);
+                        return;
                     }
                     else
                     {
-                        psi.EnvironmentVariables["PYTHONPATH"] = srcDir;
-                    }
-                    psi.UseShellExecute = false;
-                }
-                else if (File.Exists(setupBat))
-                {
-                    // Run setup if virtual environment is not yet created
-                    var setupInfo = new ProcessStartInfo();
-                    setupInfo.FileName = "cmd.exe";
-                    setupInfo.Arguments = "/c setup.bat";
-                    setupInfo.WorkingDirectory = baseDir;
-                    setupInfo.UseShellExecute = true;
-                    Process setupProc = Process.Start(setupInfo);
-                    setupProc.WaitForExit();
-
-                    if (File.Exists(venvPythonW))
-                    {
-                        psi.FileName = venvPythonW;
-                        psi.Arguments = "-m vanta.main";
-                        psi.EnvironmentVariables["PYTHONPATH"] = Path.Combine(baseDir, "src");
-                        psi.UseShellExecute = false;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Could not initialize environment. Please run setup.bat manually.", "VANTA Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        // Fallback to default browser
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = studioHtml,
+                            UseShellExecute = true
+                        };
+                        Process.Start(psi);
                         return;
                     }
                 }
+
+                // Fallback to PySide6 Qt GUI
+                if (File.Exists(distExe))
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo
+                    {
+                        FileName = distExe,
+                        WorkingDirectory = Path.Combine(baseDir, "dist", "VANTA"),
+                        UseShellExecute = false
+                    };
+                    Process.Start(psi);
+                }
+                else if (File.Exists(venvPythonW) && File.Exists(mainPy))
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo
+                    {
+                        FileName = venvPythonW,
+                        Arguments = "-m vanta.main",
+                        WorkingDirectory = baseDir,
+                        UseShellExecute = false
+                    };
+                    string existingPythonPath = Environment.GetEnvironmentVariable("PYTHONPATH");
+                    string srcDir = Path.Combine(baseDir, "src");
+                    psi.EnvironmentVariables["PYTHONPATH"] = string.IsNullOrEmpty(existingPythonPath) ? srcDir : (srcDir + ";" + existingPythonPath);
+                    Process.Start(psi);
+                }
                 else
                 {
-                    MessageBox.Show("VANTA executable components were not found.", "VANTA Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    MessageBox.Show("Could not find VANTA Studio or Python runtime.", "VANTA Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
-                // Pass through any command-line arguments (e.g. --portable, --software-gl)
-                if (args != null && args.Length > 0)
-                {
-                    psi.Arguments += " " + string.Join(" ", args);
-                }
-
-                Process.Start(psi);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to launch VANTA studio:\n\n" + ex.Message, "VANTA Launcher Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to launch VANTA:\n\n" + ex.Message, "VANTA Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

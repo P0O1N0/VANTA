@@ -47,17 +47,9 @@ class NavigationRail(QFrame):
         layout.addWidget(self.header_label)
 
         # Engine buttons
-        engine_icons = {
-            "particle_life": "⚛",
-            "physarum": "🌿",
-            "flow_field": "🌊",
-            "reaction_diffusion": "🧬",
-        }
-
         for eid in EngineRegistry.list_engine_ids():
-            icon = engine_icons.get(eid, "•")
             meta = EngineRegistry.get_metadata(eid)
-            btn = QPushButton(f"{icon}  {tr(meta.get('name_key', eid))}")
+            btn = QPushButton(tr(meta.get('name_key', eid)))
             btn.setObjectName("navButton")
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked, e=eid: self.engine_selected.emit(e))
@@ -79,7 +71,7 @@ class NavigationRail(QFrame):
         layout.addWidget(sep)
 
         # Presets & Library
-        self.btn_presets = QPushButton(f"✨ {tr('menu_presets')}")
+        self.btn_presets = QPushButton(tr('menu_presets'))
         self.btn_presets.setObjectName("navButton")
         self.btn_presets.clicked.connect(self.presets_clicked.emit)
         layout.addWidget(self.btn_presets)
@@ -93,15 +85,8 @@ class NavigationRail(QFrame):
 
     def retranslate_ui(self) -> None:
         self.header_label.setText(tr("menu_engines"))
-        self.btn_presets.setText(f"✨ {tr('menu_presets')}")
+        self.btn_presets.setText(tr("menu_presets"))
 
-        engine_icons = {
-            "particle_life": "⚛",
-            "physarum": "🌿",
-            "flow_field": "🌊",
-            "reaction_diffusion": "🧬",
-        }
         for eid, btn in self._buttons.items():
             meta = EngineRegistry.get_metadata(eid)
-            icon = engine_icons.get(eid, "•")
-            btn.setText(f"{icon}  {tr(meta.get('name_key', eid))}")
+            btn.setText(tr(meta.get("name_key", eid)))

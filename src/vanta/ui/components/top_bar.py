@@ -119,7 +119,7 @@ class TopBar(QFrame):
         layout.addWidget(self.btn_lang)
 
         # 7. Export button
-        self.btn_export = QPushButton(f"📷 {tr('btn_export')}")
+        self.btn_export = QPushButton(tr("btn_export"))
         self.btn_export.setObjectName("primaryButton")
         self.btn_export.clicked.connect(self.export_requested.emit)
         layout.addWidget(self.btn_export)
@@ -155,7 +155,7 @@ class TopBar(QFrame):
         self.btn_reset.setText(tr("btn_reset"))
         self.btn_seed.setText(tr("btn_seed_random"))
         self.btn_lang.setText(tr("language_switch"))
-        self.btn_export.setText(f"📷 {tr('btn_export')}")
+        self.btn_export.setText(tr("btn_export"))
         self.btn_about.setText(tr("btn_about"))
 
         cur_idx = self.combo_quality.currentIndex()
