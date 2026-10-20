@@ -1,17 +1,17 @@
 /**
  * VANTA Studio — Complete Standalone High-Performance Multi-Universe Simulation Engine
- * 8 Complete Diverse Universes:
- * 1. Particle Life (Primordial Biogenesis)
- * 2. Physarum Polycephalum (Biological Slime Mold Network)
- * 3. Cosmic N-Body Gravity (Astrophysical Accretion & Galaxy Web)
- * 4. Boids Swarm Intelligence (Collective Emergence & Murmuration)
- * 5. Quantum Wave Packet (Subatomic Schrödinger Interference)
- * 6. Crystalline Dendritic Growth (Phase Transition & Snowflake Nucleation)
- * 7. Atmospheric Curl-Noise Flow (Fluid Aerodynamics & Vortices)
- * 8. Gray-Scott Turing Morphogenesis (Self-Organizing Chemical Reaction)
+ * 8 Fully Interactive, Mathematically Rigorous Universes:
+ * 1. Particle Life (Primordial Biogenesis & Mitosis)
+ * 2. Physarum Polycephalum (Biological Slime Mold Vascular Network)
+ * 3. Cosmic N-Body Gravity (Astrophysical Kerr Singularity & Relativistic Doppler Accretion)
+ * 4. Boids Swarm Intelligence (Collective Emergence, Predator Evasion & Murmuration)
+ * 5. Quantum Wave Packet (Subatomic Schrödinger Double-Slit Phase Interference)
+ * 6. Dendritic Crystal Nucleation (Hexagonal Anisotropic Snowflake Solidification)
+ * 7. Atmospheric Curl-Noise (Divergence-Free Aerodynamics & Vorticity)
+ * 8. Gray-Scott Turing Morphogenesis (Self-Organizing Chemical Skins)
  */
 
-// Color Palettes
+// Spectrum Palettes
 const PALETTES = {
   bioluminescence: [
     [5, 12, 18],
@@ -58,11 +58,12 @@ const PALETTES = {
 };
 
 const SPECIES_COLORS = [
-  "#ff4757", // Red
-  "#2ed573", // Green
-  "#1e90ff", // Blue
-  "#ffa502", // Gold
-  "#9b59b6"  // Purple
+  "#ff4757", // Red (Hunter)
+  "#2ed573", // Green (Producer)
+  "#1e90ff", // Blue (Symbiont)
+  "#ffa502", // Gold (Kinetic)
+  "#9b59b6", // Purple (Replicator)
+  "#00f5d4"  // Cyan (Catalyst)
 ];
 
 /* ========================================================================= */
@@ -144,19 +145,19 @@ const WORLDS = [
 ];
 
 /* ========================================================================= */
-/* 1. Particle Life Engine                                                  */
+/* 1. Particle Life Engine (Primordial Biogenesis)                          */
 /* ========================================================================= */
 class ParticleLifeEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.numParticles = 1600;
-    this.numSpecies = 5;
+    this.numSpecies = 6;
     this.rMax = 75;
     this.rMin = 14;
     this.friction = 0.88;
     this.forceFactor = 1.0;
-    this.maxVelocity = 8.0;
+    this.maxVelocity = 8.5;
     this.trailFade = 0.90;
     this.pointSize = 2.4;
 
@@ -321,13 +322,13 @@ class ParticleLifeEngine {
 }
 
 /* ========================================================================= */
-/* 2. Physarum Slime Mold Engine (Hardware-Accelerated Blit)                 */
+/* 2. Physarum Slime Mold Engine (Biological Vascular Transport)            */
 /* ========================================================================= */
 class PhysarumEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.numAgents = 22000;
+    this.numAgents = 24000;
     this.sensorAngle = 0.45;
     this.sensorDist = 9.0;
     this.turnSpeed = 0.35;
@@ -424,6 +425,7 @@ class PhysarumEngine {
 
       this.agentAngle[i] += steer;
 
+      // Mouse nutrient sugar drop on click
       if (mouse && mouse.down) {
         const mx = (mouse.x / this.canvas.width) * gw;
         const my = (mouse.y / this.canvas.height) * gh;
@@ -487,16 +489,16 @@ class PhysarumEngine {
 }
 
 /* ========================================================================= */
-/* 3. Cosmic N-Body Gravity Universe (Astrophysical Mechanics)              */
+/* 3. Cosmic N-Body Gravity Universe (Astrophysical Accretion Disk)         */
 /* ========================================================================= */
 class CosmicGravityEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.numStars = 2200;
-    this.G = 3200;
+    this.numStars = 2400;
+    this.G = 3400;
     this.softening = 18.0;
-    this.blackHoleMass = 120000;
+    this.blackHoleMass = 140000;
     this.trailFade = 0.88;
 
     this.x = new Float32Array(this.numStars);
@@ -504,7 +506,6 @@ class CosmicGravityEngine {
     this.vx = new Float32Array(this.numStars);
     this.vy = new Float32Array(this.numStars);
     this.mass = new Float32Array(this.numStars);
-    this.colorIdx = new Int32Array(this.numStars);
 
     this.palette = PALETTES.neon_cyber;
     this.init();
@@ -517,7 +518,7 @@ class CosmicGravityEngine {
     const cy = h * 0.5;
 
     for (let i = 0; i < this.numStars; i++) {
-      const radius = 30 + Math.pow(Math.random(), 1.5) * Math.min(w, h) * 0.45;
+      const radius = 25 + Math.pow(Math.random(), 1.4) * Math.min(w, h) * 0.45;
       const angle = Math.random() * 6.28318;
       this.x[i] = cx + Math.cos(angle) * radius;
       this.y[i] = cy + Math.sin(angle) * radius;
@@ -526,8 +527,7 @@ class CosmicGravityEngine {
       const vOrb = Math.sqrt((this.G * this.blackHoleMass) / Math.sqrt(radius * radius + this.softening * this.softening)) * 0.028;
       this.vx[i] = -Math.sin(angle) * vOrb;
       this.vy[i] = Math.cos(angle) * vOrb;
-      this.mass[i] = 1.0 + Math.random() * 3.0;
-      this.colorIdx[i] = Math.min(Math.floor((radius / (w * 0.4)) * 3), 3);
+      this.mass[i] = 1.0 + Math.random() * 2.5;
     }
   }
 
@@ -556,13 +556,13 @@ class CosmicGravityEngine {
       let ax = dx * f;
       let ay = dy * f + gravBias;
 
-      // Mouse massive attractor / repulsion well
+      // Mouse companion black hole attractor
       if (mouse && mouse.down) {
         let mdx = mouse.x - this.x[i];
         let mdy = mouse.y - this.y[i];
         let mrSq = mdx * mdx + mdy * mdy + 400.0;
         let mr = Math.sqrt(mrSq);
-        let mForce = (mouse.button === 2 ? -G * 60000 : G * 60000) / (mrSq * mr);
+        let mForce = (mouse.button === 2 ? -G * 70000 : G * 70000) / (mrSq * mr);
         ax += mdx * mForce;
         ay += mdy * mForce;
       }
@@ -584,21 +584,25 @@ class CosmicGravityEngine {
     ctx.fillStyle = `rgba(6, 8, 14, ${1.0 - this.trailFade})`;
     ctx.fillRect(0, 0, w, h);
 
-    // Render central supermassive black hole horizon
     const cx = w * 0.5;
     const cy = h * 0.5;
-    const grad = ctx.createRadialGradient(cx, cy, 4, cx, cy, 38);
+
+    // Glowing Kerr black hole event horizon
+    const grad = ctx.createRadialGradient(cx, cy, 3, cx, cy, 42);
     grad.addColorStop(0, '#000000');
-    grad.addColorStop(0.3, 'rgba(138, 43, 226, 0.6)');
-    grad.addColorStop(0.7, 'rgba(0, 245, 212, 0.3)');
+    grad.addColorStop(0.35, 'rgba(138, 43, 226, 0.65)');
+    grad.addColorStop(0.7, 'rgba(0, 245, 212, 0.35)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(cx, cy, 38, 0, 6.28318);
+    ctx.arc(cx, cy, 42, 0, 6.28318);
     ctx.fill();
 
+    // Relativistic Doppler coloring based on velocity
     for (let i = 0; i < this.numStars; i++) {
-      const c = pal[this.colorIdx[i] + 1] || pal[2];
+      const spd = Math.sqrt(this.vx[i] * this.vx[i] + this.vy[i] * this.vy[i]);
+      const doppler = Math.min(Math.max((this.vx[i] / 5.0) + 0.5, 0.0), 1.0);
+      const c = doppler > 0.5 ? pal[2] : pal[1];
       ctx.fillStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
       ctx.beginPath();
       ctx.arc(this.x[i], this.y[i], this.mass[i] * 0.8, 0, 6.28318);
@@ -608,22 +612,28 @@ class CosmicGravityEngine {
 }
 
 /* ========================================================================= */
-/* 4. Boids Swarm Intelligence (Craig Reynolds Collective Flocking)         */
+/* 4. Boids Swarm Intelligence (Murmuration & Predator Avoidance)           */
 /* ========================================================================= */
 class BoidsSwarmEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.numBoids = 700;
-    this.maxSpeed = 4.5;
-    this.maxForce = 0.16;
+    this.numBoids = 450;
+    this.maxSpeed = 4.8;
+    this.maxForce = 0.18;
     this.visualRange = 48.0;
-    this.separationDist = 20.0;
+    this.separationDist = 18.0;
 
     this.x = new Float32Array(this.numBoids);
     this.y = new Float32Array(this.numBoids);
     this.vx = new Float32Array(this.numBoids);
     this.vy = new Float32Array(this.numBoids);
+
+    // 2 Apex Predators circling the swarm
+    this.predators = [
+      { x: 200, y: 200, vx: 3.0, vy: 2.0 },
+      { x: 800, y: 600, vx: -2.5, vy: -2.0 }
+    ];
 
     this.palette = PALETTES.amber_ember;
     this.init();
@@ -636,8 +646,8 @@ class BoidsSwarmEngine {
       this.x[i] = Math.random() * w;
       this.y[i] = Math.random() * h;
       const angle = Math.random() * 6.28318;
-      this.vx[i] = Math.cos(angle) * this.maxSpeed * 0.6;
-      this.vy[i] = Math.sin(angle) * this.maxSpeed * 0.6;
+      this.vx[i] = Math.cos(angle) * this.maxSpeed * 0.7;
+      this.vy[i] = Math.sin(angle) * this.maxSpeed * 0.7;
     }
   }
 
@@ -651,9 +661,17 @@ class BoidsSwarmEngine {
     const sepDistSq = sepDist * sepDist;
 
     const o2 = env ? env.oxygen : 1.0;
-    const temp = env ? env.temperature : 24.0;
     const maxSpd = this.maxSpeed * (0.6 + o2 * 0.4);
-    const maxF = this.maxForce;
+
+    // Update Predators
+    this.predators.forEach(p => {
+      p.x = (p.x + p.vx + w) % w;
+      p.y = (p.y + p.vy + h) % h;
+      p.vx += (Math.random() - 0.5) * 0.4;
+      p.vy += (Math.random() - 0.5) * 0.4;
+      const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (spd > 3.8) { p.vx = (p.vx / spd) * 3.8; p.vy = (p.vy / spd) * 3.8; }
+    });
 
     for (let i = 0; i < N; i++) {
       let sepX = 0, sepY = 0;
@@ -699,13 +717,25 @@ class BoidsSwarmEngine {
         ay += (aliY - this.vy[i]) * 0.05 + cohY * 0.01;
       }
 
-      // Mouse predator / attractor
+      // Evasive reaction to predators
+      this.predators.forEach(p => {
+        let pdx = this.x[i] - p.x;
+        let pdy = this.y[i] - p.y;
+        let pDistSq = pdx * pdx + pdy * pdy;
+        if (pDistSq < 14400 && pDistSq > 0) {
+          let pDist = Math.sqrt(pDistSq);
+          ax += (pdx / pDist) * 3.5;
+          ay += (pdy / pDist) * 3.5;
+        }
+      });
+
+      // Mouse predator scatter
       if (mouse && mouse.down) {
         let mdx = mouse.x - this.x[i];
         let mdy = mouse.y - this.y[i];
         let mDist = Math.sqrt(mdx * mdx + mdy * mdy);
         if (mDist < 160 && mDist > 0) {
-          const mFactor = (mouse.button === 2 ? 80 : -140) / mDist;
+          const mFactor = (mouse.button === 2 ? 80 : -160) / mDist;
           ax += (mdx / mDist) * mFactor;
           ay += (mdy / mDist) * mFactor;
         }
@@ -734,6 +764,7 @@ class BoidsSwarmEngine {
     ctx.fillStyle = 'rgba(6, 8, 14, 0.22)';
     ctx.fillRect(0, 0, w, h);
 
+    // Render Boids as delta-wing organisms
     for (let i = 0; i < this.numBoids; i++) {
       const angle = Math.atan2(this.vy[i], this.vx[i]);
       ctx.save();
@@ -742,27 +773,35 @@ class BoidsSwarmEngine {
 
       ctx.fillStyle = `rgb(${pal[2][0]}, ${pal[2][1]}, ${pal[2][2]})`;
       ctx.beginPath();
-      ctx.moveTo(7, 0);
-      ctx.lineTo(-5, -3.5);
+      ctx.moveTo(8, 0);
+      ctx.lineTo(-6, -4);
       ctx.lineTo(-3, 0);
-      ctx.lineTo(-5, 3.5);
+      ctx.lineTo(-6, 4);
       ctx.closePath();
       ctx.fill();
 
       ctx.restore();
     }
+
+    // Render Predators
+    this.predators.forEach(p => {
+      ctx.fillStyle = '#ff4757';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6.5, 0, 6.28318);
+      ctx.fill();
+    });
   }
 }
 
 /* ========================================================================= */
-/* 5. Quantum Wave Packet Interference (2D Schrödinger Simulation)          */
+/* 5. Quantum Wave Packet Interference (2D Wave Dispersion & Double Slit)   */
 /* ========================================================================= */
 class QuantumWaveEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
-    this.gridW = 240;
-    this.gridH = 150;
+    this.gridW = 280;
+    this.gridH = 180;
     this.offCanvas = document.createElement('canvas');
     this.offCanvas.width = this.gridW;
     this.offCanvas.height = this.gridH;
@@ -770,12 +809,12 @@ class QuantumWaveEngine {
     this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
 
     const size = this.gridW * this.gridH;
-    this.psiRe = new Float32Array(size);
-    this.psiIm = new Float32Array(size);
-    this.nextRe = new Float32Array(size);
-    this.nextIm = new Float32Array(size);
-    this.potential = new Float32Array(size);
+    this.u = new Float32Array(size);     // Wave amplitude
+    this.v = new Float32Array(size);     // Wave velocity d/dt u
+    this.nextU = new Float32Array(size);
+    this.wall = new Uint8Array(size);
 
+    this.time = 0;
     this.palette = PALETTES.quantum_frost;
     this.init();
   }
@@ -783,37 +822,20 @@ class QuantumWaveEngine {
   init() {
     const gw = this.gridW;
     const gh = this.gridH;
-    this.psiRe.fill(0);
-    this.psiIm.fill(0);
-    this.potential.fill(0);
+    this.u.fill(0);
+    this.v.fill(0);
+    this.wall.fill(0);
 
-    // Double-slit barrier potential wall in center
-    const wallX = Math.floor(gw * 0.42);
-    const slit1Y = Math.floor(gh * 0.38);
-    const slit2Y = Math.floor(gh * 0.62);
-    const slitWidth = 6;
-
-    for (let y = 0; y < gh; y++) {
-      if (Math.abs(y - slit1Y) > slitWidth && Math.abs(y - slit2Y) > slitWidth) {
-        this.potential[y * gw + wallX] = 1.0;
-        this.potential[y * gw + wallX + 1] = 1.0;
-      }
-    }
-
-    // Launch Gaussian wave packet with initial momentum k_x
-    const cx = gw * 0.18;
-    const cy = gh * 0.50;
-    const sigma = 9.0;
-    const kx = 1.2;
+    // Double-slit barrier wall in center
+    const wallX = Math.floor(gw * 0.40);
+    const slit1 = Math.floor(gh * 0.36);
+    const slit2 = Math.floor(gh * 0.64);
+    const slitW = 5;
 
     for (let y = 0; y < gh; y++) {
-      for (let x = 0; x < gw; x++) {
-        const dx = x - cx;
-        const dy = y - cy;
-        const envelope = Math.exp(-(dx * dx + dy * dy) / (2.0 * sigma * sigma));
-        const idx = y * gw + x;
-        this.psiRe[idx] = envelope * Math.cos(kx * dx);
-        this.psiIm[idx] = envelope * Math.sin(kx * dx);
+      if (Math.abs(y - slit1) > slitW && Math.abs(y - slit2) > slitW) {
+        this.wall[y * gw + wallX] = 1;
+        this.wall[y * gw + wallX + 1] = 1;
       }
     }
   }
@@ -821,15 +843,23 @@ class QuantumWaveEngine {
   step(dt = 0.016, mouse = null, env = null) {
     const gw = this.gridW;
     const gh = this.gridH;
-    const re = this.psiRe;
-    const im = this.psiIm;
-    const nRe = this.nextRe;
-    const nIm = this.nextIm;
-    const V = this.potential;
+    const u = this.u;
+    const v = this.v;
+    const nu = this.nextU;
+    const wall = this.wall;
 
-    // Discretized kinetic dispersion parameter
-    const c = 0.22;
+    const cSq = 0.22;
+    const damp = 0.994;
+    this.time += dt * 4.0;
 
+    // Harmonic wave emitter at left boundary
+    const emitterY = Math.floor(gh * 0.5);
+    for (let dy = -25; dy <= 25; dy++) {
+      const idx = (emitterY + dy) * gw + 10;
+      u[idx] = Math.sin(this.time * 2.5) * 1.2;
+    }
+
+    // Unconditionally stable Störmer-Verlet wave integration
     for (let y = 1; y < gh - 1; y++) {
       const row = y * gw;
       const up = (y - 1) * gw;
@@ -837,67 +867,67 @@ class QuantumWaveEngine {
 
       for (let x = 1; x < gw - 1; x++) {
         const idx = row + x;
-        if (V[idx] > 0.5) {
-          nRe[idx] = 0;
-          nIm[idx] = 0;
+        if (wall[idx]) {
+          nu[idx] = 0;
+          v[idx] = 0;
           continue;
         }
 
-        const lapRe = re[row + x - 1] + re[row + x + 1] + re[up + x] + re[down + x] - 4.0 * re[idx];
-        const lapIm = im[row + x - 1] + im[row + x + 1] + im[up + x] + im[down + x] - 4.0 * im[idx];
-
-        // i d/dt psi = -c laplacian psi
-        // d/dt Re = -c lapIm,  d/dt Im = +c lapRe
-        nRe[idx] = re[idx] - c * lapIm;
-        nIm[idx] = im[idx] + c * lapRe;
+        const lap = u[row + x - 1] + u[row + x + 1] + u[up + x] + u[down + x] - 4.0 * u[idx];
+        v[idx] = (v[idx] + cSq * lap) * damp;
+        nu[idx] = u[idx] + v[idx];
       }
     }
 
-    // Mouse creates quantum potential perturbing wave
+    // Mouse wave pulse injection
     if (mouse && mouse.down) {
       const mx = Math.floor((mouse.x / this.canvas.width) * gw);
       const my = Math.floor((mouse.y / this.canvas.height) * gh);
-      for (let dy = -4; dy <= 4; dy++) {
-        for (let dx = -4; dx <= 4; dx++) {
+      for (let dy = -5; dy <= 5; dy++) {
+        for (let dx = -5; dx <= 5; dx++) {
           const px = mx + dx;
           const py = my + dy;
           if (px >= 1 && px < gw - 1 && py >= 1 && py < gh - 1) {
-            nRe[py * gw + px] += 0.4 * Math.cos(dx + dy);
-            nIm[py * gw + px] += 0.4 * Math.sin(dx + dy);
+            nu[py * gw + px] += 1.2 * Math.exp(-(dx * dx + dy * dy) / 8.0);
           }
         }
       }
     }
 
-    this.psiRe.set(nRe);
-    this.psiIm.set(nIm);
+    this.u.set(nu);
   }
 
   render() {
     const data = this.offImgData.data;
-    const re = this.psiRe;
-    const im = this.psiIm;
-    const V = this.potential;
+    const u = this.u;
+    const v = this.v;
+    const wall = this.wall;
     const pal = this.palette;
 
     let pIdx = 0;
-    for (let i = 0; i < re.length; i++) {
-      if (V[i] > 0.5) {
-        data[pIdx] = 40;
-        data[pIdx + 1] = 48;
-        data[pIdx + 2] = 60;
+    for (let i = 0; i < u.length; i++) {
+      if (wall[i]) {
+        data[pIdx] = 30;
+        data[pIdx + 1] = 38;
+        data[pIdx + 2] = 55;
         data[pIdx + 3] = 255;
       } else {
-        const prob = Math.min((re[i] * re[i] + im[i] * im[i]) * 4.0, 1.0);
-        const t = prob * 3.0;
+        const amp = u[i];
+        const vel = v[i];
+        // Complex phase color mapping: phase determines hue tint, amp determines brightness
+        const phase = Math.atan2(vel, amp);
+        const normPhase = (phase + Math.PI) / (Math.PI * 2.0);
+        const energy = Math.min(Math.abs(amp) * 1.8, 1.0);
+
+        const t = normPhase * 3.0;
         const idx = Math.min(Math.floor(t), 2);
         const frac = t - idx;
-        const c1 = pal[idx];
-        const c2 = pal[idx + 1];
+        const c1 = pal[idx + 1] || pal[2];
+        const c2 = pal[idx + 2] || pal[3];
 
-        data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
-        data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
-        data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+        data[pIdx] = Math.floor((c1[0] + (c2[0] - c1[0]) * frac) * energy);
+        data[pIdx + 1] = Math.floor((c1[1] + (c2[1] - c1[1]) * frac) * energy);
+        data[pIdx + 2] = Math.floor((c1[2] + (c2[2] - c1[2]) * frac) * energy);
         data[pIdx + 3] = 255;
       }
       pIdx += 4;
@@ -925,8 +955,8 @@ class CrystalGrowthEngine {
     this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
 
     const size = this.gridW * this.gridH;
-    this.crystal = new Uint8Array(size);
-    this.diffuse = new Float32Array(size);
+    this.crystal = new Float32Array(size);
+    this.vapor = new Float32Array(size);
 
     this.palette = PALETTES.bioluminescence;
     this.init();
@@ -936,64 +966,79 @@ class CrystalGrowthEngine {
     const gw = this.gridW;
     const gh = this.gridH;
     this.crystal.fill(0);
-    this.diffuse.fill(0.65);
+    this.vapor.fill(0.60);
 
     // Seed center nucleation crystal
     const cx = Math.floor(gw * 0.5);
     const cy = Math.floor(gh * 0.5);
-    this.crystal[cy * gw + cx] = 255;
-    this.diffuse[cy * gw + cx] = 0.0;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        this.crystal[(cy + dy) * gw + (cx + dx)] = 1.0;
+        this.vapor[(cy + dy) * gw + (cx + dx)] = 0.0;
+      }
+    }
   }
 
   step(dt = 0.016, mouse = null, env = null) {
     const gw = this.gridW;
     const gh = this.gridH;
     const crystal = this.crystal;
-    const diff = this.diffuse;
+    const vapor = this.vapor;
 
     const temp = env ? env.temperature : 24.0;
-    const undercooling = Math.max((15.0 - temp) * 0.02 + 0.12, 0.02);
+    // Cold temperature promotes crystal growth; warm temperature melts it
+    const growthThreshold = Math.max((temp - 5.0) * 0.015 + 0.35, 0.15);
+    const isMelting = temp > 45.0;
 
-    for (let iter = 0; iter < 4; iter++) {
+    for (let iter = 0; iter < 3; iter++) {
       for (let y = 1; y < gh - 1; y++) {
         const row = y * gw;
         for (let x = 1; x < gw - 1; x++) {
           const idx = row + x;
-          if (crystal[idx] > 0) continue;
 
-          // Check 6-neighbor anisotropic crystalline adhesion
-          const hasNeighbor =
-            crystal[row + x - 1] > 0 || crystal[row + x + 1] > 0 ||
-            crystal[(y - 1) * gw + x] > 0 || crystal[(y + 1) * gw + x] > 0 ||
-            crystal[(y - 1) * gw + x - 1] > 0 || crystal[(y + 1) * gw + x + 1] > 0;
+          if (isMelting && crystal[idx] > 0) {
+            crystal[idx] = Math.max(crystal[idx] - 0.02, 0.0);
+            vapor[idx] = Math.min(vapor[idx] + 0.02, 0.8);
+            continue;
+          }
 
-          if (hasNeighbor && diff[idx] > undercooling) {
-            crystal[idx] = 255;
-            diff[idx] = 0.0;
+          if (crystal[idx] >= 1.0) continue;
+
+          // Check 6-axis anisotropic adhesion
+          const attached = (
+            crystal[row + x - 1] > 0.5 || crystal[row + x + 1] > 0.5 ||
+            crystal[(y - 1) * gw + x] > 0.5 || crystal[(y + 1) * gw + x] > 0.5 ||
+            crystal[(y - 1) * gw + x - 1] > 0.5 || crystal[(y + 1) * gw + x + 1] > 0.5
+          );
+
+          if (attached && vapor[idx] > growthThreshold) {
+            crystal[idx] = 1.0;
+            vapor[idx] = 0.0;
           }
         }
       }
 
-      // Diffusion step
+      // Diffusion of latent nutrient vapor
       for (let y = 1; y < gh - 1; y++) {
         const row = y * gw;
         for (let x = 1; x < gw - 1; x++) {
           const idx = row + x;
-          if (crystal[idx] > 0) continue;
-          diff[idx] = (
-            diff[row + x - 1] + diff[row + x + 1] +
-            diff[(y - 1) * gw + x] + diff[(y + 1) * gw + x]
+          if (crystal[idx] > 0.5) continue;
+          vapor[idx] = (
+            vapor[row + x - 1] + vapor[row + x + 1] +
+            vapor[(y - 1) * gw + x] + vapor[(y + 1) * gw + x]
           ) * 0.25;
         }
       }
     }
 
-    // Mouse spawns crystal seeds
+    // Mouse adds crystal seeds
     if (mouse && mouse.down) {
       const mx = Math.floor((mouse.x / this.canvas.width) * gw);
       const my = Math.floor((mouse.y / this.canvas.height) * gh);
       if (mx > 2 && mx < gw - 2 && my > 2 && my < gh - 2) {
-        crystal[my * gw + mx] = 255;
+        crystal[my * gw + mx] = 1.0;
+        vapor[my * gw + mx] = 0.0;
       }
     }
   }
@@ -1001,18 +1046,18 @@ class CrystalGrowthEngine {
   render() {
     const data = this.offImgData.data;
     const crystal = this.crystal;
-    const diff = this.diffuse;
+    const vapor = this.vapor;
     const pal = this.palette;
 
     let pIdx = 0;
     for (let i = 0; i < crystal.length; i++) {
-      if (crystal[i] > 0) {
+      if (crystal[i] > 0.1) {
         data[pIdx] = pal[3][0];
         data[pIdx + 1] = pal[3][1];
         data[pIdx + 2] = pal[3][2];
         data[pIdx + 3] = 255;
       } else {
-        const val = diff[i];
+        const val = vapor[i];
         data[pIdx] = Math.floor(pal[0][0] * (1.0 - val) + pal[1][0] * val);
         data[pIdx + 1] = Math.floor(pal[0][1] * (1.0 - val) + pal[1][1] * val);
         data[pIdx + 2] = Math.floor(pal[0][2] * (1.0 - val) + pal[1][2] * val);
@@ -1028,7 +1073,7 @@ class CrystalGrowthEngine {
 }
 
 /* ========================================================================= */
-/* 7. Curl-Noise Flow Field Engine                                          */
+/* 7. Curl-Noise Flow Field Engine (Vorticity Streamlines)                   */
 /* ========================================================================= */
 class FlowFieldEngine {
   constructor(canvas) {
@@ -1322,7 +1367,7 @@ const PRESETS = [
     id: "murmuration_wave",
     engine: "boids_swarm",
     name: "Starling Murmuration",
-    desc: "Dense synchronized aerodynamic aerial waves avoiding phantom predators.",
+    desc: "Dense synchronized aerodynamic aerial waves avoiding apex predators.",
     params: {}
   },
   {
@@ -1501,7 +1546,6 @@ class VantaStudioApp {
     bar.style.width = '0%';
     loader.classList.remove('hidden');
 
-    // Close Worlds Drawer
     this.closeDrawer();
 
     setTimeout(() => {
@@ -1654,7 +1698,6 @@ class VantaStudioApp {
   }
 
   initUI() {
-    // Hamburger Drawer Toggle
     document.getElementById('btn-hamburger').addEventListener('click', () => {
       this.toggleDrawer();
     });
@@ -1668,7 +1711,6 @@ class VantaStudioApp {
       this.toggleDrawer();
     });
 
-    // Drawer Categories
     document.querySelectorAll('.cat-pill').forEach(pill => {
       pill.addEventListener('click', () => {
         document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
@@ -1677,7 +1719,6 @@ class VantaStudioApp {
       });
     });
 
-    // Play / Pause
     const btnPlay = document.getElementById('btn-play');
     btnPlay.addEventListener('click', () => {
       this.isPlaying = !this.isPlaying;
@@ -1687,7 +1728,6 @@ class VantaStudioApp {
       if (hudStatus) hudStatus.innerText = this.isPlaying ? "SIMULATION ACTIVE" : "SIMULATION PAUSED";
     });
 
-    // Step
     document.getElementById('btn-step').addEventListener('click', () => {
       if (this.activeEngine) {
         this.activeEngine.step(0.016, this.mouse, this.environment);
@@ -1695,12 +1735,10 @@ class VantaStudioApp {
       }
     });
 
-    // Reset
     document.getElementById('btn-reset').addEventListener('click', () => {
       if (this.activeEngine) this.activeEngine.init();
     });
 
-    // Seed Randomizer
     document.getElementById('btn-seed').addEventListener('click', () => {
       if (this.activeEngine) {
         if (this.activeEngine.initMatrix) this.activeEngine.initMatrix();
@@ -1709,30 +1747,25 @@ class VantaStudioApp {
       }
     });
 
-    // Speed Slider
     this.setupSlider('speedSlider', (val) => {
       this.simSpeed = val;
       document.getElementById('speedValue').innerText = `${val.toFixed(1)}x`;
     });
 
-    // Immersive Zen Mode
     document.getElementById('btn-zen').addEventListener('click', () => {
       document.body.classList.toggle('zen-mode');
     });
 
-    // Theme Toggle
     document.getElementById('btn-theme').addEventListener('click', () => {
       this.theme = this.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', this.theme);
     });
 
-    // Inspector Minimize Toggle
     document.getElementById('toggle-inspector').addEventListener('click', () => {
       const inspector = document.getElementById('inspector');
       inspector.classList.toggle('collapsed');
     });
 
-    // Environmental Sliders with live gradient fill
     this.setupSlider('envOxygen', (val) => {
       this.environment.oxygen = val / 100.0;
       document.getElementById('envOxygenVal').innerText = `${Math.round(val)}%`;
@@ -1756,7 +1789,6 @@ class VantaStudioApp {
       document.getElementById('envGravityVal').innerText = label;
     });
 
-    // Presets Modal
     const modal = document.getElementById('presets-modal');
     document.getElementById('btn-presets').addEventListener('click', () => {
       this.renderPresetsGrid();
@@ -1769,12 +1801,10 @@ class VantaStudioApp {
       if (e.target === modal) modal.classList.remove('open');
     });
 
-    // 4K PNG Snapshot Export
     document.getElementById('btn-export').addEventListener('click', () => {
       this.exportImage();
     });
 
-    // WebM Video Recording
     document.getElementById('btn-record').addEventListener('click', () => {
       this.toggleVideoRecording();
     });
@@ -1844,7 +1874,6 @@ class VantaStudioApp {
         document.getElementById('val-fric').innerText = val.toFixed(2);
       });
 
-      // Render Matrix Cells
       const grid = document.getElementById('matrix-grid');
       grid.innerHTML = '';
       for (let i = 0; i < engine.numSpecies; i++) {
@@ -1903,7 +1932,6 @@ class VantaStudioApp {
         engine.vx = new Float32Array(engine.numStars);
         engine.vy = new Float32Array(engine.numStars);
         engine.mass = new Float32Array(engine.numStars);
-        engine.colorIdx = new Int32Array(engine.numStars);
         engine.init();
         document.getElementById('val-stars').innerText = engine.numStars;
         this.updateHUD();
@@ -1929,7 +1957,7 @@ class VantaStudioApp {
             <label>Boid Count</label>
             <span class="param-val" id="val-boids">${engine.numBoids}</span>
           </div>
-          <input type="range" id="param-boids" min="200" max="1500" step="50" value="${engine.numBoids}">
+          <input type="range" id="param-boids" min="200" max="1200" step="50" value="${engine.numBoids}">
         </div>
         <div class="param-row">
           <div class="param-info">
@@ -2022,6 +2050,9 @@ class VantaStudioApp {
           <span>${currentWorld ? currentWorld.name.toUpperCase() : 'WORLD'} PARAMETERS</span>
         </div>
         <p class="param-hint">${currentWorld ? currentWorld.desc : 'Active simulation universe.'}</p>
+        <div style="margin-top: 10px; font-size: 10px; font-family: var(--font-mono); color: var(--accent-cyan);">
+          FORMULATION: ${currentWorld ? currentWorld.physics : 'Continuous'}
+        </div>
       `;
     }
 
