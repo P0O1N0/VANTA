@@ -1,7 +1,14 @@
 /**
- * VANTA Studio — Complete Standalone High-Performance Simulation Engine & UI
- * Zero Server Dependency, Hardware-Accelerated Blit Shaders, Ramotion Animated Tab Bar,
- * Dynamic Sliders, and Environmental Dynamics.
+ * VANTA Studio — Complete Standalone High-Performance Multi-Universe Simulation Engine
+ * 8 Complete Diverse Universes:
+ * 1. Particle Life (Primordial Biogenesis)
+ * 2. Physarum Polycephalum (Biological Slime Mold Network)
+ * 3. Cosmic N-Body Gravity (Astrophysical Accretion & Galaxy Web)
+ * 4. Boids Swarm Intelligence (Collective Emergence & Murmuration)
+ * 5. Quantum Wave Packet (Subatomic Schrödinger Interference)
+ * 6. Crystalline Dendritic Growth (Phase Transition & Snowflake Nucleation)
+ * 7. Atmospheric Curl-Noise Flow (Fluid Aerodynamics & Vortices)
+ * 8. Gray-Scott Turing Morphogenesis (Self-Organizing Chemical Reaction)
  */
 
 // Color Palettes
@@ -36,6 +43,12 @@ const PALETTES = {
     [51, 230, 77],
     [230, 255, 204]
   ],
+  quantum_frost: [
+    [4, 8, 20],
+    [20, 60, 140],
+    [60, 170, 255],
+    [240, 250, 255]
+  ],
   monochrome: [
     [13, 13, 15],
     [77, 82, 89],
@@ -50,6 +63,84 @@ const SPECIES_COLORS = [
   "#1e90ff", // Blue
   "#ffa502", // Gold
   "#9b59b6"  // Purple
+];
+
+/* ========================================================================= */
+/* Universe Metadata Catalog                                                */
+/* ========================================================================= */
+const WORLDS = [
+  {
+    id: "particle_life",
+    name: "Particle Life",
+    category: "biology",
+    tag: "Primordial Biogenesis",
+    badge: "Cellular Emergence",
+    desc: "Multi-species artificial chemistry where asymmetric attraction rules yield self-replicating cells, predatory pursuit, and mutualism.",
+    physics: "Non-reciprocal Lennard-Jones variant on spatial grid"
+  },
+  {
+    id: "physarum",
+    name: "Physarum Slime Mold",
+    category: "biology",
+    tag: "Amoeboid Network",
+    badge: "Biological Transport",
+    desc: "Single-celled polycephalum intelligent foraging network computing optimal vascular paths via cyclic chemo-attractant streaming.",
+    physics: "Agent-based Chemoreceptor Gradient Field"
+  },
+  {
+    id: "cosmic_gravity",
+    name: "Cosmic N-Body Gravity",
+    category: "physics",
+    tag: "Astrophysical Space",
+    badge: "Newtonian Orbitals",
+    desc: "Astrophysical star clusters and accretion disks orbiting supermassive gravitational wells under relativistic Keplerian mechanics.",
+    physics: "Inverse-Square Gravitational Field with Softening Core"
+  },
+  {
+    id: "boids_swarm",
+    name: "Boids Swarm Intelligence",
+    category: "biology",
+    tag: "Collective Behavior",
+    badge: "Flocking Murmuration",
+    desc: "Craig Reynolds' artificial life flocking dynamics governed by local separation, velocity alignment, and swarm cohesion.",
+    physics: "Emergent Swarm Dynamics & Predator Avoidance"
+  },
+  {
+    id: "quantum_wave",
+    name: "Quantum Wave Packet",
+    category: "quantum",
+    tag: "Subatomic Dispersion",
+    badge: "Schrödinger Dynamics",
+    desc: "Quantum wave function psi dispersing, interfering through double slits, and tunneling through localized potential barriers.",
+    physics: "2D Complex Discretized Schrödinger Equation"
+  },
+  {
+    id: "crystal_growth",
+    name: "Dendritic Solidification",
+    category: "quantum",
+    tag: "Phase Transition",
+    badge: "Snowflake Nucleation",
+    desc: "Anisotropic crystal lattice nucleation and snowflake branching formed by diffusion-limited aggregation and thermal undercooling.",
+    physics: "Phase-Field Dendrite Solidification"
+  },
+  {
+    id: "flow_field",
+    name: "Curl-Noise Flow Field",
+    category: "physics",
+    tag: "Atmospheric Fluid",
+    badge: "Vortex Streamlines",
+    desc: "Divergence-free fluid flow lines simulating atmospheric jet streams, oceanic whirlpools, and chaotic aerodynamic boundary layers.",
+    physics: "Analytical Vector Potential Curl Field"
+  },
+  {
+    id: "reaction_diffusion",
+    name: "Turing Morphogenesis",
+    category: "quantum",
+    tag: "Reaction Kinetics",
+    badge: "Gray-Scott Patterns",
+    desc: "Alan Turing's morphogenetic pattern formation: chemical activators and inhibitors generating leopards spots, coral reefs, and soliton pulses.",
+    physics: "Coupled Non-Linear Reaction-Diffusion Stencil"
+  }
 ];
 
 /* ========================================================================= */
@@ -119,7 +210,6 @@ class ParticleLifeEngine {
     const thermalJitter = Math.max((temp - 4.0) / 40.0, 0.0) * 10.0;
     const effectiveFriction = Math.max(0.4, (this.friction - visc * 0.7));
 
-    // Spatial hash grid
     const cellSize = Math.max(rMax, 25);
     const gridW = Math.max(Math.floor(w / cellSize), 1);
     const gridH = Math.max(Math.floor(h / cellSize), 1);
@@ -132,7 +222,6 @@ class ParticleLifeEngine {
       grid[gy * gridW + gx].push(i);
     }
 
-    // Force evaluation
     for (let i = 0; i < N; i++) {
       let fx = 0;
       let fy = grav * 80.0;
@@ -232,7 +321,7 @@ class ParticleLifeEngine {
 }
 
 /* ========================================================================= */
-/* 2. Physarum Slime Mold Engine (Hardware-Accelerated Bilinear Blit)         */
+/* 2. Physarum Slime Mold Engine (Hardware-Accelerated Blit)                 */
 /* ========================================================================= */
 class PhysarumEngine {
   constructor(canvas) {
@@ -246,7 +335,6 @@ class PhysarumEngine {
     this.decayFactor = 0.94;
     this.depositAmount = 5.0;
 
-    // Fixed internal simulation grid (320x200 = 64,000 pixels)
     this.gridW = 320;
     this.gridH = 200;
     this.offCanvas = document.createElement('canvas');
@@ -325,7 +413,7 @@ class PhysarumEngine {
 
       let steer = 0;
       if (fVal > lVal && fVal > rVal) {
-        // Continue forward
+        // Forward
       } else if (fVal < lVal && fVal < rVal) {
         steer = (Math.random() < 0.5 ? 1 : -1) * this.turnSpeed;
       } else if (lVal > rVal) {
@@ -392,8 +480,6 @@ class PhysarumEngine {
     }
 
     this.offCtx.putImageData(this.offImgData, 0, 0);
-
-    // Hardware accelerated GPU bilinear blit
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.imageSmoothingQuality = 'high';
     this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
@@ -401,7 +487,548 @@ class PhysarumEngine {
 }
 
 /* ========================================================================= */
-/* 3. Curl-Noise Flow Field Engine                                          */
+/* 3. Cosmic N-Body Gravity Universe (Astrophysical Mechanics)              */
+/* ========================================================================= */
+class CosmicGravityEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.numStars = 2200;
+    this.G = 3200;
+    this.softening = 18.0;
+    this.blackHoleMass = 120000;
+    this.trailFade = 0.88;
+
+    this.x = new Float32Array(this.numStars);
+    this.y = new Float32Array(this.numStars);
+    this.vx = new Float32Array(this.numStars);
+    this.vy = new Float32Array(this.numStars);
+    this.mass = new Float32Array(this.numStars);
+    this.colorIdx = new Int32Array(this.numStars);
+
+    this.palette = PALETTES.neon_cyber;
+    this.init();
+  }
+
+  init() {
+    const w = this.canvas.width || 1200;
+    const h = this.canvas.height || 800;
+    const cx = w * 0.5;
+    const cy = h * 0.5;
+
+    for (let i = 0; i < this.numStars; i++) {
+      const radius = 30 + Math.pow(Math.random(), 1.5) * Math.min(w, h) * 0.45;
+      const angle = Math.random() * 6.28318;
+      this.x[i] = cx + Math.cos(angle) * radius;
+      this.y[i] = cy + Math.sin(angle) * radius;
+
+      // Keplerian orbital velocity v = sqrt(G*M / r)
+      const vOrb = Math.sqrt((this.G * this.blackHoleMass) / Math.sqrt(radius * radius + this.softening * this.softening)) * 0.028;
+      this.vx[i] = -Math.sin(angle) * vOrb;
+      this.vy[i] = Math.cos(angle) * vOrb;
+      this.mass[i] = 1.0 + Math.random() * 3.0;
+      this.colorIdx[i] = Math.min(Math.floor((radius / (w * 0.4)) * 3), 3);
+    }
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const cx = w * 0.5;
+    const cy = h * 0.5;
+    const N = this.numStars;
+    const epsSq = this.softening * this.softening;
+    const G = this.G;
+    const bhMass = this.blackHoleMass;
+
+    const visc = env ? env.viscosity : 0.05;
+    const o2 = env ? env.oxygen : 1.0;
+    const gravBias = env ? env.gravity * 60.0 : 0.0;
+    const damp = 1.0 - visc * 0.4;
+
+    for (let i = 0; i < N; i++) {
+      let dx = cx - this.x[i];
+      let dy = cy - this.y[i];
+      let rSq = dx * dx + dy * dy + epsSq;
+      let r = Math.sqrt(rSq);
+      let f = (G * bhMass * o2) / (rSq * r);
+
+      let ax = dx * f;
+      let ay = dy * f + gravBias;
+
+      // Mouse massive attractor / repulsion well
+      if (mouse && mouse.down) {
+        let mdx = mouse.x - this.x[i];
+        let mdy = mouse.y - this.y[i];
+        let mrSq = mdx * mdx + mdy * mdy + 400.0;
+        let mr = Math.sqrt(mrSq);
+        let mForce = (mouse.button === 2 ? -G * 60000 : G * 60000) / (mrSq * mr);
+        ax += mdx * mForce;
+        ay += mdy * mForce;
+      }
+
+      this.vx[i] = (this.vx[i] + ax * dt) * damp;
+      this.vy[i] = (this.vy[i] + ay * dt) * damp;
+
+      this.x[i] += this.vx[i] * dt * 50.0;
+      this.y[i] += this.vy[i] * dt * 50.0;
+    }
+  }
+
+  render() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const pal = this.palette;
+
+    ctx.fillStyle = `rgba(6, 8, 14, ${1.0 - this.trailFade})`;
+    ctx.fillRect(0, 0, w, h);
+
+    // Render central supermassive black hole horizon
+    const cx = w * 0.5;
+    const cy = h * 0.5;
+    const grad = ctx.createRadialGradient(cx, cy, 4, cx, cy, 38);
+    grad.addColorStop(0, '#000000');
+    grad.addColorStop(0.3, 'rgba(138, 43, 226, 0.6)');
+    grad.addColorStop(0.7, 'rgba(0, 245, 212, 0.3)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 38, 0, 6.28318);
+    ctx.fill();
+
+    for (let i = 0; i < this.numStars; i++) {
+      const c = pal[this.colorIdx[i] + 1] || pal[2];
+      ctx.fillStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+      ctx.beginPath();
+      ctx.arc(this.x[i], this.y[i], this.mass[i] * 0.8, 0, 6.28318);
+      ctx.fill();
+    }
+  }
+}
+
+/* ========================================================================= */
+/* 4. Boids Swarm Intelligence (Craig Reynolds Collective Flocking)         */
+/* ========================================================================= */
+class BoidsSwarmEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.numBoids = 700;
+    this.maxSpeed = 4.5;
+    this.maxForce = 0.16;
+    this.visualRange = 48.0;
+    this.separationDist = 20.0;
+
+    this.x = new Float32Array(this.numBoids);
+    this.y = new Float32Array(this.numBoids);
+    this.vx = new Float32Array(this.numBoids);
+    this.vy = new Float32Array(this.numBoids);
+
+    this.palette = PALETTES.amber_ember;
+    this.init();
+  }
+
+  init() {
+    const w = this.canvas.width || 1200;
+    const h = this.canvas.height || 800;
+    for (let i = 0; i < this.numBoids; i++) {
+      this.x[i] = Math.random() * w;
+      this.y[i] = Math.random() * h;
+      const angle = Math.random() * 6.28318;
+      this.vx[i] = Math.cos(angle) * this.maxSpeed * 0.6;
+      this.vy[i] = Math.sin(angle) * this.maxSpeed * 0.6;
+    }
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const N = this.numBoids;
+    const vRange = this.visualRange;
+    const vRangeSq = vRange * vRange;
+    const sepDist = this.separationDist;
+    const sepDistSq = sepDist * sepDist;
+
+    const o2 = env ? env.oxygen : 1.0;
+    const temp = env ? env.temperature : 24.0;
+    const maxSpd = this.maxSpeed * (0.6 + o2 * 0.4);
+    const maxF = this.maxForce;
+
+    for (let i = 0; i < N; i++) {
+      let sepX = 0, sepY = 0;
+      let aliX = 0, aliY = 0;
+      let cohX = 0, cohY = 0;
+      let neighbors = 0;
+
+      for (let j = 0; j < N; j++) {
+        if (i === j) continue;
+        let dx = this.x[j] - this.x[i];
+        let dy = this.y[j] - this.y[i];
+
+        if (dx > w * 0.5) dx -= w;
+        else if (dx < -w * 0.5) dx += w;
+        if (dy > h * 0.5) dy -= h;
+        else if (dy < -h * 0.5) dy += h;
+
+        const dSq = dx * dx + dy * dy;
+        if (dSq < vRangeSq) {
+          neighbors++;
+          aliX += this.vx[j];
+          aliY += this.vy[j];
+          cohX += dx;
+          cohY += dy;
+
+          if (dSq < sepDistSq && dSq > 0) {
+            const d = Math.sqrt(dSq);
+            sepX -= (dx / d) * (1.0 - d / sepDist);
+            sepY -= (dy / d) * (1.0 - d / sepDist);
+          }
+        }
+      }
+
+      let ax = sepX * 1.5;
+      let ay = sepY * 1.5;
+
+      if (neighbors > 0) {
+        aliX /= neighbors;
+        aliY /= neighbors;
+        cohX /= neighbors;
+        cohY /= neighbors;
+        ax += (aliX - this.vx[i]) * 0.05 + cohX * 0.01;
+        ay += (aliY - this.vy[i]) * 0.05 + cohY * 0.01;
+      }
+
+      // Mouse predator / attractor
+      if (mouse && mouse.down) {
+        let mdx = mouse.x - this.x[i];
+        let mdy = mouse.y - this.y[i];
+        let mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+        if (mDist < 160 && mDist > 0) {
+          const mFactor = (mouse.button === 2 ? 80 : -140) / mDist;
+          ax += (mdx / mDist) * mFactor;
+          ay += (mdy / mDist) * mFactor;
+        }
+      }
+
+      this.vx[i] += ax;
+      this.vy[i] += ay;
+
+      const spd = Math.sqrt(this.vx[i] * this.vx[i] + this.vy[i] * this.vy[i]);
+      if (spd > maxSpd) {
+        this.vx[i] = (this.vx[i] / spd) * maxSpd;
+        this.vy[i] = (this.vy[i] / spd) * maxSpd;
+      }
+
+      this.x[i] = (this.x[i] + this.vx[i] + w) % w;
+      this.y[i] = (this.y[i] + this.vy[i] + h) % h;
+    }
+  }
+
+  render() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const pal = this.palette;
+
+    ctx.fillStyle = 'rgba(6, 8, 14, 0.22)';
+    ctx.fillRect(0, 0, w, h);
+
+    for (let i = 0; i < this.numBoids; i++) {
+      const angle = Math.atan2(this.vy[i], this.vx[i]);
+      ctx.save();
+      ctx.translate(this.x[i], this.y[i]);
+      ctx.rotate(angle);
+
+      ctx.fillStyle = `rgb(${pal[2][0]}, ${pal[2][1]}, ${pal[2][2]})`;
+      ctx.beginPath();
+      ctx.moveTo(7, 0);
+      ctx.lineTo(-5, -3.5);
+      ctx.lineTo(-3, 0);
+      ctx.lineTo(-5, 3.5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+}
+
+/* ========================================================================= */
+/* 5. Quantum Wave Packet Interference (2D Schrödinger Simulation)          */
+/* ========================================================================= */
+class QuantumWaveEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.gridW = 240;
+    this.gridH = 150;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
+
+    const size = this.gridW * this.gridH;
+    this.psiRe = new Float32Array(size);
+    this.psiIm = new Float32Array(size);
+    this.nextRe = new Float32Array(size);
+    this.nextIm = new Float32Array(size);
+    this.potential = new Float32Array(size);
+
+    this.palette = PALETTES.quantum_frost;
+    this.init();
+  }
+
+  init() {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    this.psiRe.fill(0);
+    this.psiIm.fill(0);
+    this.potential.fill(0);
+
+    // Double-slit barrier potential wall in center
+    const wallX = Math.floor(gw * 0.42);
+    const slit1Y = Math.floor(gh * 0.38);
+    const slit2Y = Math.floor(gh * 0.62);
+    const slitWidth = 6;
+
+    for (let y = 0; y < gh; y++) {
+      if (Math.abs(y - slit1Y) > slitWidth && Math.abs(y - slit2Y) > slitWidth) {
+        this.potential[y * gw + wallX] = 1.0;
+        this.potential[y * gw + wallX + 1] = 1.0;
+      }
+    }
+
+    // Launch Gaussian wave packet with initial momentum k_x
+    const cx = gw * 0.18;
+    const cy = gh * 0.50;
+    const sigma = 9.0;
+    const kx = 1.2;
+
+    for (let y = 0; y < gh; y++) {
+      for (let x = 0; x < gw; x++) {
+        const dx = x - cx;
+        const dy = y - cy;
+        const envelope = Math.exp(-(dx * dx + dy * dy) / (2.0 * sigma * sigma));
+        const idx = y * gw + x;
+        this.psiRe[idx] = envelope * Math.cos(kx * dx);
+        this.psiIm[idx] = envelope * Math.sin(kx * dx);
+      }
+    }
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const re = this.psiRe;
+    const im = this.psiIm;
+    const nRe = this.nextRe;
+    const nIm = this.nextIm;
+    const V = this.potential;
+
+    // Discretized kinetic dispersion parameter
+    const c = 0.22;
+
+    for (let y = 1; y < gh - 1; y++) {
+      const row = y * gw;
+      const up = (y - 1) * gw;
+      const down = (y + 1) * gw;
+
+      for (let x = 1; x < gw - 1; x++) {
+        const idx = row + x;
+        if (V[idx] > 0.5) {
+          nRe[idx] = 0;
+          nIm[idx] = 0;
+          continue;
+        }
+
+        const lapRe = re[row + x - 1] + re[row + x + 1] + re[up + x] + re[down + x] - 4.0 * re[idx];
+        const lapIm = im[row + x - 1] + im[row + x + 1] + im[up + x] + im[down + x] - 4.0 * im[idx];
+
+        // i d/dt psi = -c laplacian psi
+        // d/dt Re = -c lapIm,  d/dt Im = +c lapRe
+        nRe[idx] = re[idx] - c * lapIm;
+        nIm[idx] = im[idx] + c * lapRe;
+      }
+    }
+
+    // Mouse creates quantum potential perturbing wave
+    if (mouse && mouse.down) {
+      const mx = Math.floor((mouse.x / this.canvas.width) * gw);
+      const my = Math.floor((mouse.y / this.canvas.height) * gh);
+      for (let dy = -4; dy <= 4; dy++) {
+        for (let dx = -4; dx <= 4; dx++) {
+          const px = mx + dx;
+          const py = my + dy;
+          if (px >= 1 && px < gw - 1 && py >= 1 && py < gh - 1) {
+            nRe[py * gw + px] += 0.4 * Math.cos(dx + dy);
+            nIm[py * gw + px] += 0.4 * Math.sin(dx + dy);
+          }
+        }
+      }
+    }
+
+    this.psiRe.set(nRe);
+    this.psiIm.set(nIm);
+  }
+
+  render() {
+    const data = this.offImgData.data;
+    const re = this.psiRe;
+    const im = this.psiIm;
+    const V = this.potential;
+    const pal = this.palette;
+
+    let pIdx = 0;
+    for (let i = 0; i < re.length; i++) {
+      if (V[i] > 0.5) {
+        data[pIdx] = 40;
+        data[pIdx + 1] = 48;
+        data[pIdx + 2] = 60;
+        data[pIdx + 3] = 255;
+      } else {
+        const prob = Math.min((re[i] * re[i] + im[i] * im[i]) * 4.0, 1.0);
+        const t = prob * 3.0;
+        const idx = Math.min(Math.floor(t), 2);
+        const frac = t - idx;
+        const c1 = pal[idx];
+        const c2 = pal[idx + 1];
+
+        data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
+        data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
+        data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+        data[pIdx + 3] = 255;
+      }
+      pIdx += 4;
+    }
+
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
+  }
+}
+
+/* ========================================================================= */
+/* 6. Dendritic Crystal Nucleation & Snowflake Growth                       */
+/* ========================================================================= */
+class CrystalGrowthEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.gridW = 280;
+    this.gridH = 180;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
+
+    const size = this.gridW * this.gridH;
+    this.crystal = new Uint8Array(size);
+    this.diffuse = new Float32Array(size);
+
+    this.palette = PALETTES.bioluminescence;
+    this.init();
+  }
+
+  init() {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    this.crystal.fill(0);
+    this.diffuse.fill(0.65);
+
+    // Seed center nucleation crystal
+    const cx = Math.floor(gw * 0.5);
+    const cy = Math.floor(gh * 0.5);
+    this.crystal[cy * gw + cx] = 255;
+    this.diffuse[cy * gw + cx] = 0.0;
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const crystal = this.crystal;
+    const diff = this.diffuse;
+
+    const temp = env ? env.temperature : 24.0;
+    const undercooling = Math.max((15.0 - temp) * 0.02 + 0.12, 0.02);
+
+    for (let iter = 0; iter < 4; iter++) {
+      for (let y = 1; y < gh - 1; y++) {
+        const row = y * gw;
+        for (let x = 1; x < gw - 1; x++) {
+          const idx = row + x;
+          if (crystal[idx] > 0) continue;
+
+          // Check 6-neighbor anisotropic crystalline adhesion
+          const hasNeighbor =
+            crystal[row + x - 1] > 0 || crystal[row + x + 1] > 0 ||
+            crystal[(y - 1) * gw + x] > 0 || crystal[(y + 1) * gw + x] > 0 ||
+            crystal[(y - 1) * gw + x - 1] > 0 || crystal[(y + 1) * gw + x + 1] > 0;
+
+          if (hasNeighbor && diff[idx] > undercooling) {
+            crystal[idx] = 255;
+            diff[idx] = 0.0;
+          }
+        }
+      }
+
+      // Diffusion step
+      for (let y = 1; y < gh - 1; y++) {
+        const row = y * gw;
+        for (let x = 1; x < gw - 1; x++) {
+          const idx = row + x;
+          if (crystal[idx] > 0) continue;
+          diff[idx] = (
+            diff[row + x - 1] + diff[row + x + 1] +
+            diff[(y - 1) * gw + x] + diff[(y + 1) * gw + x]
+          ) * 0.25;
+        }
+      }
+    }
+
+    // Mouse spawns crystal seeds
+    if (mouse && mouse.down) {
+      const mx = Math.floor((mouse.x / this.canvas.width) * gw);
+      const my = Math.floor((mouse.y / this.canvas.height) * gh);
+      if (mx > 2 && mx < gw - 2 && my > 2 && my < gh - 2) {
+        crystal[my * gw + mx] = 255;
+      }
+    }
+  }
+
+  render() {
+    const data = this.offImgData.data;
+    const crystal = this.crystal;
+    const diff = this.diffuse;
+    const pal = this.palette;
+
+    let pIdx = 0;
+    for (let i = 0; i < crystal.length; i++) {
+      if (crystal[i] > 0) {
+        data[pIdx] = pal[3][0];
+        data[pIdx + 1] = pal[3][1];
+        data[pIdx + 2] = pal[3][2];
+        data[pIdx + 3] = 255;
+      } else {
+        const val = diff[i];
+        data[pIdx] = Math.floor(pal[0][0] * (1.0 - val) + pal[1][0] * val);
+        data[pIdx + 1] = Math.floor(pal[0][1] * (1.0 - val) + pal[1][1] * val);
+        data[pIdx + 2] = Math.floor(pal[0][2] * (1.0 - val) + pal[1][2] * val);
+        data[pIdx + 3] = 255;
+      }
+      pIdx += 4;
+    }
+
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
+  }
+}
+
+/* ========================================================================= */
+/* 7. Curl-Noise Flow Field Engine                                          */
 /* ========================================================================= */
 class FlowFieldEngine {
   constructor(canvas) {
@@ -516,7 +1143,7 @@ class FlowFieldEngine {
 }
 
 /* ========================================================================= */
-/* 4. Gray-Scott Reaction-Diffusion Engine (Hardware-Accelerated Blit)       */
+/* 8. Gray-Scott Turing Morphogenesis Engine                                */
 /* ========================================================================= */
 class ReactionDiffusionEngine {
   constructor(canvas) {
@@ -661,10 +1288,7 @@ class ReactionDiffusionEngine {
     }
 
     this.offCtx.putImageData(this.offImgData, 0, 0);
-
-    // Hardware accelerated GPU bilinear blit
     this.ctx.imageSmoothingEnabled = true;
-    this.ctx.imageSmoothingQuality = 'high';
     this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
   }
 }
@@ -688,46 +1312,46 @@ const PRESETS = [
     params: { rMax: 100, rMin: 20, friction: 0.92, particles: 2200 }
   },
   {
-    id: "crystalline_lattice",
-    engine: "particle_life",
-    name: "Crystalline Geometry",
-    desc: "Quasi-crystal lattices formed by strong localized inter-particle repulsion.",
-    params: { rMax: 65, rMin: 26, friction: 0.78, particles: 1200 }
+    id: "galactic_spiral",
+    engine: "cosmic_gravity",
+    name: "Milky Way Spiral",
+    desc: "Keplerian rotation curves around supermassive central black hole singularity.",
+    params: {}
   },
   {
-    id: "slime_vascular",
-    engine: "physarum",
-    name: "Vascular Venation",
-    desc: "Interconnected transport network resembling bio-vascular leaf venation.",
-    params: { sensorAngle: 0.45, sensorDist: 10.0, turnSpeed: 0.35, decay: 0.95 }
+    id: "murmuration_wave",
+    engine: "boids_swarm",
+    name: "Starling Murmuration",
+    desc: "Dense synchronized aerodynamic aerial waves avoiding phantom predators.",
+    params: {}
   },
   {
-    id: "neural_connectome",
-    engine: "physarum",
-    name: "Neural Connectome",
-    desc: "High-density dendritic filaments forming cognitive synaptic highways.",
-    params: { sensorAngle: 0.30, sensorDist: 18.0, turnSpeed: 0.50, decay: 0.92 }
+    id: "quantum_diffraction",
+    engine: "quantum_wave",
+    name: "Double Slit Diffraction",
+    desc: "Subatomic phase interference fringes displaying quantum wave-particle duality.",
+    params: {}
+  },
+  {
+    id: "ice_snowflake",
+    engine: "crystal_growth",
+    name: "Hexagonal Snowflake",
+    desc: "Phase-transition dendritic nucleation in sub-zero thermal undercooling conditions.",
+    params: {}
   },
   {
     id: "oceanic_turbulence",
     engine: "flow_field",
-    name: "Oceanic Vortices",
-    desc: "Divergence-free fluid flow lines tracing deep oceanic atmospheric currents.",
+    name: "Atmospheric Jet Stream",
+    desc: "Divergence-free fluid flow lines tracing deep oceanic currents and planetary vortices.",
     params: { speed: 2.4, noiseScale: 0.0035, trail: 0.94 }
   },
   {
     id: "turing_coral",
     engine: "reaction_diffusion",
     name: "Turing Reef Coral",
-    desc: "Labyrinthine Turing patterns and bio-calcification morphogenetic growth.",
+    desc: "Labyrinthine Turing morphogenetic patterns and biocatalytic skin morphogenesis.",
     params: { feed: 0.0545, kill: 0.0620, substeps: 5 }
-  },
-  {
-    id: "solitary_soliton",
-    engine: "reaction_diffusion",
-    name: "Soliton Wave Pulses",
-    desc: "Traveling solitary wave pulses maintaining coherence in low-feed substrates.",
-    params: { feed: 0.0300, kill: 0.0620, substeps: 5 }
   }
 ];
 
@@ -744,10 +1368,10 @@ class VantaStudioApp {
     this.mouse = { x: 0, y: 0, down: false, button: 1 };
 
     this.environment = {
-      oxygen: 1.0,     // 0.0 - 2.0 (100%)
-      temperature: 24, // -10 - 80 (°C)
-      viscosity: 0.05, // 0.01 - 0.30
-      gravity: 0.0     // -1.0 - 1.0
+      oxygen: 1.0,
+      temperature: 24,
+      viscosity: 0.05,
+      gravity: 0.0
     };
 
     this.fps = 60;
@@ -760,10 +1384,14 @@ class VantaStudioApp {
     this.mediaRecorder = null;
     this.recordedChunks = [];
 
-    // CRITICAL: Instantiate engines BEFORE resizeCanvas()
+    // All 8 Universes
     this.engines = {
       particle_life: new ParticleLifeEngine(this.canvas),
       physarum: new PhysarumEngine(this.canvas),
+      cosmic_gravity: new CosmicGravityEngine(this.canvas),
+      boids_swarm: new BoidsSwarmEngine(this.canvas),
+      quantum_wave: new QuantumWaveEngine(this.canvas),
+      crystal_growth: new CrystalGrowthEngine(this.canvas),
       flow_field: new FlowFieldEngine(this.canvas),
       reaction_diffusion: new ReactionDiffusionEngine(this.canvas)
     };
@@ -774,13 +1402,8 @@ class VantaStudioApp {
 
     this.initUI();
     this.initMouseInteractions();
+    this.renderWorldsDrawer();
     this.renderInspector();
-
-    // Position initial Ramotion Tab Pill
-    requestAnimationFrame(() => {
-      const activeTab = document.querySelector('.engine-tab.active');
-      if (activeTab) this.updateTabPill(activeTab);
-    });
 
     requestAnimationFrame((t) => this.loop(t));
   }
@@ -832,31 +1455,18 @@ class VantaStudioApp {
     if (latVal) latVal.innerText = `${this.frameTime}ms`;
     if (coordVal) coordVal.innerText = `X: ${Math.round(this.mouse.x)} Y: ${Math.round(this.mouse.y)}`;
 
-    const engineNames = {
-      particle_life: "Particle Life",
-      physarum: "Physarum Polycephalum",
-      flow_field: "Curl-Noise Flow",
-      reaction_diffusion: "Reaction-Diffusion"
-    };
-    if (engVal) engVal.innerText = engineNames[this.activeEngineId] || this.activeEngineId;
+    const currentWorld = WORLDS.find(w => w.id === this.activeEngineId);
+    if (engVal && currentWorld) engVal.innerText = currentWorld.name;
 
     if (entVal && this.activeEngine) {
       let count = 0;
       if (this.activeEngine.numParticles) count = this.activeEngine.numParticles;
+      else if (this.activeEngine.numStars) count = this.activeEngine.numStars;
+      else if (this.activeEngine.numBoids) count = this.activeEngine.numBoids;
       else if (this.activeEngine.numAgents) count = this.activeEngine.numAgents;
       else if (this.activeEngine.gridW) count = this.activeEngine.gridW * this.activeEngine.gridH;
       entVal.innerText = count.toLocaleString();
     }
-  }
-
-  updateTabPill(tab) {
-    const pill = document.getElementById('tab-pill');
-    if (!pill || !tab) return;
-    const nav = document.getElementById('engine-tabs-nav');
-    const navRect = nav.getBoundingClientRect();
-    const tabRect = tab.getBoundingClientRect();
-    pill.style.width = `${tabRect.width}px`;
-    pill.style.transform = `translateX(${tabRect.left - navRect.left - 4}px)`;
   }
 
   setupSlider(id, onInput) {
@@ -874,6 +1484,114 @@ class VantaStudioApp {
     update();
   }
 
+  // Cinematic World Switching with Portal Loader
+  switchWorld(targetWorldId) {
+    if (targetWorldId === this.activeEngineId) return;
+
+    const targetWorld = WORLDS.find(w => w.id === targetWorldId);
+    if (!targetWorld) return;
+
+    const loader = document.getElementById('world-loader');
+    const title = document.getElementById('loader-title');
+    const desc = document.getElementById('loader-desc');
+    const bar = document.getElementById('loader-bar');
+
+    title.innerText = targetWorld.name.toUpperCase();
+    desc.innerText = `${targetWorld.desc} [${targetWorld.physics}]`;
+    bar.style.width = '0%';
+    loader.classList.remove('hidden');
+
+    // Close Worlds Drawer
+    this.closeDrawer();
+
+    setTimeout(() => {
+      bar.style.width = '70%';
+      this.activeEngineId = targetWorldId;
+      this.activeEngine.init();
+      document.getElementById('active-world-name').innerText = targetWorld.name;
+      this.renderWorldsDrawer();
+      this.renderInspector();
+      this.updateHUD();
+    }, 120);
+
+    setTimeout(() => {
+      bar.style.width = '100%';
+    }, 220);
+
+    setTimeout(() => {
+      loader.classList.add('hidden');
+    }, 380);
+  }
+
+  toggleDrawer() {
+    const drawer = document.getElementById('worlds-drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+    const btn = document.getElementById('btn-hamburger');
+    const isOpen = drawer.classList.contains('open');
+
+    if (isOpen) {
+      drawer.classList.remove('open');
+      backdrop.classList.remove('open');
+      btn.classList.remove('active');
+    } else {
+      drawer.classList.add('open');
+      backdrop.classList.add('open');
+      btn.classList.add('active');
+    }
+  }
+
+  closeDrawer() {
+    const drawer = document.getElementById('worlds-drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+    const btn = document.getElementById('btn-hamburger');
+    if (drawer) drawer.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+    if (btn) btn.classList.remove('active');
+  }
+
+  renderWorldsDrawer(activeCategory = 'all') {
+    const list = document.getElementById('worlds-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    const filtered = activeCategory === 'all'
+      ? WORLDS
+      : WORLDS.filter(w => w.category === activeCategory);
+
+    filtered.forEach(world => {
+      const card = document.createElement('div');
+      card.className = `world-card ${world.id === this.activeEngineId ? 'active' : ''}`;
+      card.innerHTML = `
+        <div class="world-card-top">
+          <div class="world-card-title-group">
+            <div class="world-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+              </svg>
+            </div>
+            <div>
+              <div class="world-card-title">${world.name}</div>
+            </div>
+          </div>
+          <span class="world-card-badge">${world.badge}</span>
+        </div>
+        <p class="world-card-desc">${world.desc}</p>
+        <div class="world-card-meta">
+          <span>${world.tag.toUpperCase()}</span>
+          <span>•</span>
+          <span>${world.physics}</span>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        this.switchWorld(world.id);
+      });
+
+      list.appendChild(card);
+    });
+  }
+
   initMouseInteractions() {
     const ring = document.getElementById('cursor-ring');
 
@@ -888,7 +1606,7 @@ class VantaStudioApp {
     });
 
     window.addEventListener('mousedown', (e) => {
-      if (e.target.closest('#topbar') || e.target.closest('#inspector') || e.target.closest('.modal-overlay')) return;
+      if (e.target.closest('#topbar') || e.target.closest('#inspector') || e.target.closest('#worlds-drawer') || e.target.closest('.modal-overlay')) return;
       this.mouse.down = true;
       this.mouse.button = e.button === 2 ? 2 : 1;
       if (ring) ring.classList.add('active');
@@ -900,7 +1618,7 @@ class VantaStudioApp {
     });
 
     window.addEventListener('contextmenu', (e) => {
-      if (!e.target.closest('#inspector') && !e.target.closest('#topbar')) {
+      if (!e.target.closest('#inspector') && !e.target.closest('#topbar') && !e.target.closest('#worlds-drawer')) {
         e.preventDefault();
       }
     });
@@ -919,29 +1637,43 @@ class VantaStudioApp {
         document.getElementById('btn-seed').click();
       } else if (e.code === 'KeyP') {
         document.getElementById('btn-presets').click();
-      } else if (e.code === 'Digit1') {
-        document.querySelector('.engine-tab[data-engine="particle_life"]').click();
-      } else if (e.code === 'Digit2') {
-        document.querySelector('.engine-tab[data-engine="physarum"]').click();
-      } else if (e.code === 'Digit3') {
-        document.querySelector('.engine-tab[data-engine="flow_field"]').click();
-      } else if (e.code === 'Digit4') {
-        document.querySelector('.engine-tab[data-engine="reaction_diffusion"]').click();
+      } else if (e.code === 'KeyM' || e.code === 'Tab') {
+        e.preventDefault();
+        this.toggleDrawer();
+      } else if (e.code === 'KeyH') {
+        document.getElementById('btn-zen').click();
+      } else if (e.code === 'Escape') {
+        this.closeDrawer();
+        document.getElementById('presets-modal').classList.remove('open');
+        document.body.classList.remove('zen-mode');
+      } else if (e.code >= 'Digit1' && e.code <= 'Digit8') {
+        const idx = parseInt(e.code.replace('Digit', '')) - 1;
+        if (WORLDS[idx]) this.switchWorld(WORLDS[idx].id);
       }
     });
   }
 
   initUI() {
-    // Engine Tab Switching with Ramotion Pill Animation
-    document.querySelectorAll('.engine-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.engine-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        this.updateTabPill(tab);
-        this.activeEngineId = tab.dataset.engine;
-        this.activeEngine.init();
-        this.renderInspector();
-        this.updateHUD();
+    // Hamburger Drawer Toggle
+    document.getElementById('btn-hamburger').addEventListener('click', () => {
+      this.toggleDrawer();
+    });
+    document.getElementById('close-drawer').addEventListener('click', () => {
+      this.closeDrawer();
+    });
+    document.getElementById('drawer-backdrop').addEventListener('click', () => {
+      this.closeDrawer();
+    });
+    document.getElementById('active-world-pill').addEventListener('click', () => {
+      this.toggleDrawer();
+    });
+
+    // Drawer Categories
+    document.querySelectorAll('.cat-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        this.renderWorldsDrawer(pill.dataset.cat);
       });
     });
 
@@ -981,6 +1713,11 @@ class VantaStudioApp {
     this.setupSlider('speedSlider', (val) => {
       this.simSpeed = val;
       document.getElementById('speedValue').innerText = `${val.toFixed(1)}x`;
+    });
+
+    // Immersive Zen Mode
+    document.getElementById('btn-zen').addEventListener('click', () => {
+      document.body.classList.toggle('zen-mode');
     });
 
     // Theme Toggle
@@ -1049,15 +1786,13 @@ class VantaStudioApp {
     container.innerHTML = '';
 
     const engine = this.activeEngine;
+    const currentWorld = WORLDS.find(w => w.id === this.activeEngineId);
+
     if (this.activeEngineId === 'particle_life') {
       container.innerHTML = `
         <div class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
           <span>PARTICLE LIFE PARAMETERS</span>
         </div>
-
         <div class="param-row">
           <div class="param-info">
             <label>Population Count</label>
@@ -1065,7 +1800,6 @@ class VantaStudioApp {
           </div>
           <input type="range" id="param-particles" min="600" max="3600" step="200" value="${engine.numParticles}">
         </div>
-
         <div class="param-row">
           <div class="param-info">
             <label>Interaction Radius (R_max)</label>
@@ -1073,15 +1807,6 @@ class VantaStudioApp {
           </div>
           <input type="range" id="param-rmax" min="30" max="150" step="5" value="${engine.rMax}">
         </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Core Repulsion (R_min)</label>
-            <span class="param-val" id="val-rmin">${engine.rMin}px</span>
-          </div>
-          <input type="range" id="param-rmin" min="6" max="32" step="2" value="${engine.rMin}">
-        </div>
-
         <div class="param-row">
           <div class="param-info">
             <label>Substrate Friction</label>
@@ -1089,7 +1814,6 @@ class VantaStudioApp {
           </div>
           <input type="range" id="param-fric" min="0.65" max="0.98" step="0.01" value="${engine.friction}">
         </div>
-
         <div class="matrix-container">
           <div class="section-title" style="margin-bottom: 4px;">
             <span>SPECIES ATTRACTION MATRIX</span>
@@ -1115,11 +1839,6 @@ class VantaStudioApp {
         document.getElementById('val-rmax').innerText = `${engine.rMax}px`;
       });
 
-      this.setupSlider('param-rmin', (val) => {
-        engine.rMin = Math.round(val);
-        document.getElementById('val-rmin').innerText = `${engine.rMin}px`;
-      });
-
       this.setupSlider('param-fric', (val) => {
         engine.friction = val;
         document.getElementById('val-fric').innerText = val.toFixed(2);
@@ -1136,7 +1855,6 @@ class VantaStudioApp {
           cell.innerText = val.toFixed(1);
           cell.style.backgroundColor = val >= 0 ? `rgba(0, 245, 212, ${Math.abs(val) * 0.75})` : `rgba(255, 71, 87, ${Math.abs(val) * 0.75})`;
           cell.style.color = '#fff';
-          cell.title = `Species ${i + 1} to Species ${j + 1}: ${val.toFixed(2)}`;
 
           cell.addEventListener('click', () => {
             let newVal = engine.matrix[i][j] + 0.4;
@@ -1150,12 +1868,111 @@ class VantaStudioApp {
         }
       }
 
+    } else if (this.activeEngineId === 'cosmic_gravity') {
+      container.innerHTML = `
+        <div class="section-title">
+          <span>COSMIC GRAVITY PARAMETERS</span>
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Star Population</label>
+            <span class="param-val" id="val-stars">${engine.numStars}</span>
+          </div>
+          <input type="range" id="param-stars" min="800" max="4000" step="200" value="${engine.numStars}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Gravitational Constant (G)</label>
+            <span class="param-val" id="val-gconst">${engine.G}</span>
+          </div>
+          <input type="range" id="param-gconst" min="1000" max="8000" step="500" value="${engine.G}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Central Black Hole Mass</label>
+            <span class="param-val" id="val-bhmass">${(engine.blackHoleMass / 1000).toFixed(0)}k</span>
+          </div>
+          <input type="range" id="param-bhmass" min="40000" max="300000" step="20000" value="${engine.blackHoleMass}">
+        </div>
+      `;
+
+      this.setupSlider('param-stars', (val) => {
+        engine.numStars = Math.round(val);
+        engine.x = new Float32Array(engine.numStars);
+        engine.y = new Float32Array(engine.numStars);
+        engine.vx = new Float32Array(engine.numStars);
+        engine.vy = new Float32Array(engine.numStars);
+        engine.mass = new Float32Array(engine.numStars);
+        engine.colorIdx = new Int32Array(engine.numStars);
+        engine.init();
+        document.getElementById('val-stars').innerText = engine.numStars;
+        this.updateHUD();
+      });
+
+      this.setupSlider('param-gconst', (val) => {
+        engine.G = Math.round(val);
+        document.getElementById('val-gconst').innerText = engine.G;
+      });
+
+      this.setupSlider('param-bhmass', (val) => {
+        engine.blackHoleMass = Math.round(val);
+        document.getElementById('val-bhmass').innerText = `${(val / 1000).toFixed(0)}k`;
+      });
+
+    } else if (this.activeEngineId === 'boids_swarm') {
+      container.innerHTML = `
+        <div class="section-title">
+          <span>BOIDS SWARM PARAMETERS</span>
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Boid Count</label>
+            <span class="param-val" id="val-boids">${engine.numBoids}</span>
+          </div>
+          <input type="range" id="param-boids" min="200" max="1500" step="50" value="${engine.numBoids}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Visual Radar Range</label>
+            <span class="param-val" id="val-boid-range">${engine.visualRange}px</span>
+          </div>
+          <input type="range" id="param-boid-range" min="20" max="90" step="5" value="${engine.visualRange}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Separation Distance</label>
+            <span class="param-val" id="val-boid-sep">${engine.separationDist}px</span>
+          </div>
+          <input type="range" id="param-boid-sep" min="10" max="40" step="2" value="${engine.separationDist}">
+        </div>
+      `;
+
+      this.setupSlider('param-boids', (val) => {
+        engine.numBoids = Math.round(val);
+        engine.x = new Float32Array(engine.numBoids);
+        engine.y = new Float32Array(engine.numBoids);
+        engine.vx = new Float32Array(engine.numBoids);
+        engine.vy = new Float32Array(engine.numBoids);
+        engine.init();
+        document.getElementById('val-boids').innerText = engine.numBoids;
+        this.updateHUD();
+      });
+
+      this.setupSlider('param-boid-range', (val) => {
+        engine.visualRange = val;
+        document.getElementById('val-boid-range').innerText = `${val}px`;
+      });
+
+      this.setupSlider('param-boid-sep', (val) => {
+        engine.separationDist = val;
+        document.getElementById('val-boid-sep').innerText = `${val}px`;
+      });
+
     } else if (this.activeEngineId === 'physarum') {
       container.innerHTML = `
         <div class="section-title">
-          <span>PHYSARUM SLIME MOLD PARAMETERS</span>
+          <span>PHYSARUM PARAMETERS</span>
         </div>
-
         <div class="param-row">
           <div class="param-info">
             <label>Agent Count</label>
@@ -1163,7 +1980,6 @@ class VantaStudioApp {
           </div>
           <input type="range" id="param-phys-agents" min="10000" max="48000" step="2000" value="${engine.numAgents}">
         </div>
-
         <div class="param-row">
           <div class="param-info">
             <label>Sensor Angle</label>
@@ -1171,21 +1987,12 @@ class VantaStudioApp {
           </div>
           <input type="range" id="param-phys-angle" min="0.15" max="1.1" step="0.05" value="${engine.sensorAngle}">
         </div>
-
         <div class="param-row">
           <div class="param-info">
             <label>Sensor Distance</label>
             <span class="param-val" id="val-phys-dist">${engine.sensorDist}px</span>
           </div>
           <input type="range" id="param-phys-dist" min="5" max="30" step="1" value="${engine.sensorDist}">
-        </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Trail Decay Factor</label>
-            <span class="param-val" id="val-phys-decay">${engine.decayFactor.toFixed(3)}</span>
-          </div>
-          <input type="range" id="param-phys-decay" min="0.88" max="0.99" step="0.005" value="${engine.decayFactor}">
         </div>
       `;
 
@@ -1209,123 +2016,13 @@ class VantaStudioApp {
         document.getElementById('val-phys-dist').innerText = `${val.toFixed(0)}px`;
       });
 
-      this.setupSlider('param-phys-decay', (val) => {
-        engine.decayFactor = val;
-        document.getElementById('val-phys-decay').innerText = val.toFixed(3);
-      });
-
-    } else if (this.activeEngineId === 'flow_field') {
+    } else {
       container.innerHTML = `
         <div class="section-title">
-          <span>FLOW FIELD PARAMETERS</span>
+          <span>${currentWorld ? currentWorld.name.toUpperCase() : 'WORLD'} PARAMETERS</span>
         </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Particle Count</label>
-            <span class="param-val" id="val-flow-parts">${engine.numParticles.toLocaleString()}</span>
-          </div>
-          <input type="range" id="param-flow-parts" min="3000" max="18000" step="1000" value="${engine.numParticles}">
-        </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Field Noise Scale</label>
-            <span class="param-val" id="val-flow-scale">${(engine.noiseScale * 1000).toFixed(1)}</span>
-          </div>
-          <input type="range" id="param-flow-scale" min="0.001" max="0.010" step="0.0005" value="${engine.noiseScale}">
-        </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Particle Velocity</label>
-            <span class="param-val" id="val-flow-speed">${engine.particleSpeed.toFixed(1)}</span>
-          </div>
-          <input type="range" id="param-flow-speed" min="0.8" max="5.0" step="0.2" value="${engine.particleSpeed}">
-        </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Trail Persistence</label>
-            <span class="param-val" id="val-flow-trail">${engine.trailLength.toFixed(2)}</span>
-          </div>
-          <input type="range" id="param-flow-trail" min="0.80" max="0.98" step="0.01" value="${engine.trailLength}">
-        </div>
+        <p class="param-hint">${currentWorld ? currentWorld.desc : 'Active simulation universe.'}</p>
       `;
-
-      this.setupSlider('param-flow-parts', (val) => {
-        engine.numParticles = Math.round(val);
-        engine.x = new Float32Array(engine.numParticles);
-        engine.y = new Float32Array(engine.numParticles);
-        engine.prevX = new Float32Array(engine.numParticles);
-        engine.prevY = new Float32Array(engine.numParticles);
-        engine.age = new Int32Array(engine.numParticles);
-        engine.maxAge = new Int32Array(engine.numParticles);
-        engine.init();
-        document.getElementById('val-flow-parts').innerText = engine.numParticles.toLocaleString();
-        this.updateHUD();
-      });
-
-      this.setupSlider('param-flow-scale', (val) => {
-        engine.noiseScale = val;
-        document.getElementById('val-flow-scale').innerText = (val * 1000).toFixed(1);
-      });
-
-      this.setupSlider('param-flow-speed', (val) => {
-        engine.particleSpeed = val;
-        document.getElementById('val-flow-speed').innerText = val.toFixed(1);
-      });
-
-      this.setupSlider('param-flow-trail', (val) => {
-        engine.trailLength = val;
-        document.getElementById('val-flow-trail').innerText = val.toFixed(2);
-      });
-
-    } else if (this.activeEngineId === 'reaction_diffusion') {
-      container.innerHTML = `
-        <div class="section-title">
-          <span>REACTION-DIFFUSION PARAMETERS</span>
-        </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Feed Rate (F)</label>
-            <span class="param-val" id="val-rd-feed">${engine.feed.toFixed(4)}</span>
-          </div>
-          <input type="range" id="param-rd-feed" min="0.0100" max="0.0800" step="0.0010" value="${engine.feed}">
-        </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Kill Rate (K)</label>
-            <span class="param-val" id="val-rd-kill">${engine.kill.toFixed(4)}</span>
-          </div>
-          <input type="range" id="param-rd-kill" min="0.0450" max="0.0700" step="0.0005" value="${engine.kill}">
-        </div>
-
-        <div class="param-row">
-          <div class="param-info">
-            <label>Diffusion Substeps</label>
-            <span class="param-val" id="val-rd-sub">${engine.substeps}</span>
-          </div>
-          <input type="range" id="param-rd-sub" min="2" max="10" step="1" value="${engine.substeps}">
-        </div>
-      `;
-
-      this.setupSlider('param-rd-feed', (val) => {
-        engine.feed = val;
-        document.getElementById('val-rd-feed').innerText = val.toFixed(4);
-      });
-
-      this.setupSlider('param-rd-kill', (val) => {
-        engine.kill = val;
-        document.getElementById('val-rd-kill').innerText = val.toFixed(4);
-      });
-
-      this.setupSlider('param-rd-sub', (val) => {
-        engine.substeps = Math.round(val);
-        document.getElementById('val-rd-sub').innerText = engine.substeps;
-      });
     }
 
     this.renderPalettes();
@@ -1342,6 +2039,7 @@ class VantaStudioApp {
       amber_ember: "Amber Ember",
       spectral_velvet: "Spectral Velvet",
       toxic_emerald: "Toxic Emerald",
+      quantum_frost: "Quantum Frost",
       monochrome: "Monochrome"
     };
 
@@ -1389,29 +2087,14 @@ class VantaStudioApp {
 
       card.addEventListener('click', () => {
         modal.classList.remove('open');
-        const targetTab = document.querySelector(`.engine-tab[data-engine="${p.engine}"]`);
-        if (targetTab) targetTab.click();
+        this.switchWorld(p.engine);
 
         const eng = this.activeEngine;
         if (p.engine === 'particle_life') {
           if (p.params.rMax) eng.rMax = p.params.rMax;
           if (p.params.rMin) eng.rMin = p.params.rMin;
           if (p.params.friction) eng.friction = p.params.friction;
-        } else if (p.engine === 'physarum') {
-          if (p.params.sensorAngle) eng.sensorAngle = p.params.sensorAngle;
-          if (p.params.sensorDist) eng.sensorDist = p.params.sensorDist;
-          if (p.params.turnSpeed) eng.turnSpeed = p.params.turnSpeed;
-          if (p.params.decay) eng.decayFactor = p.params.decay;
-        } else if (p.engine === 'flow_field') {
-          if (p.params.speed) eng.particleSpeed = p.params.speed;
-          if (p.params.noiseScale) eng.noiseScale = p.params.noiseScale;
-          if (p.params.trail) eng.trailLength = p.params.trail;
-        } else if (p.engine === 'reaction_diffusion') {
-          if (p.params.feed) eng.feed = p.params.feed;
-          if (p.params.kill) eng.kill = p.params.kill;
-          if (p.params.substeps) eng.substeps = p.params.substeps;
         }
-
         eng.init();
         this.renderInspector();
       });
