@@ -2732,21 +2732,197 @@ class VantaStudioApp {
 
   initSplashScreen() {
     const splash = document.getElementById('vanta-splash');
-    const fill = document.getElementById('splash-progress-fill');
     if (!splash) return;
 
-    // Animate hairline progress bar over 4,000 ms
-    requestAnimationFrame(() => {
-      if (fill) fill.style.width = '100%';
-    });
+    const fill = document.getElementById('splash-progress-fill');
+    const counterEl = document.getElementById('splash-counter');
+    const phaseEl = document.getElementById('splash-phase');
+    const canvas = document.getElementById('splash-canvas');
 
-    // Enforce 4.0 second (4,000 ms) minimum display duration
-    setTimeout(() => {
-      splash.classList.add('fade-out');
-      setTimeout(() => {
-        splash.classList.add('hidden');
-      }, 700);
-    }, 4000);
+    const totalDuration = 4000; // Exact 4.0 seconds duration
+    const startTime = performance.now();
+    let animFrameId = null;
+    let dispersed = false;
+
+    // Phase telemetry milestones
+    const phases = [
+      { threshold: 0.18, text: 'NUCLEATING PHASE MANIFOLDS' },
+      { threshold: 0.42, text: 'CALIBRATING REACTION-DIFFUSION MATRICES' },
+      { threshold: 0.68, text: 'INITIALIZING SYNAPTIC VECTOR FIELDS' },
+      { threshold: 0.88, text: 'SYNCHRONIZING HYDRODYNAMIC BOUNDARIES' },
+      { threshold: 1.00, text: 'RESONANCE ACHIEVED // STUDIO READY' }
+    ];
+
+    // Initialize Generative Living Harmonic Particle Canvas
+    let particles = [];
+    let ctx = null;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let mouse = { x: -9999, y: -9999 };
+
+    if (canvas) {
+      ctx = canvas.getContext('2d');
+      const resizeSplashCanvas = () => {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+      };
+      resizeSplashCanvas();
+      window.addEventListener('resize', resizeSplashCanvas, { passive: true });
+
+      const numParticles = 140;
+      for (let i = 0; i < numParticles; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * Math.min(canvas.width, canvas.height) * 0.45;
+        particles.push({
+          x: canvas.width * 0.5 + Math.cos(angle) * dist,
+          y: canvas.height * 0.5 + Math.sin(angle) * dist,
+          vx: (Math.random() - 0.5) * 0.8 * dpr,
+          vy: (Math.random() - 0.5) * 0.8 * dpr,
+          baseRadius: (0.75 + Math.random() * 1.5) * dpr,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.0015 + Math.random() * 0.002,
+          colorType: Math.random() > 0.4 ? (Math.random() > 0.5 ? 'teal' : 'violet') : 'white'
+        });
+      }
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX * dpr;
+        mouse.y = e.clientY * dpr;
+      }, { passive: true });
+    }
+
+    // Animation & Progress Loop
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const linearProgress = Math.min(1.0, elapsed / totalDuration);
+
+      // Smooth custom easing curve (easeOutCubic)
+      const easeProgress = 1.0 - Math.pow(1.0 - linearProgress, 3);
+      const displayPercent = Math.min(100, Math.floor(easeProgress * 100));
+
+      // Update Kinetic Counter (000% to 100%)
+      if (counterEl) {
+        counterEl.textContent = String(displayPercent).padStart(3, '0') + '%';
+      }
+
+      // Update Hairline Progress Fill
+      if (fill) {
+        fill.style.width = (linearProgress * 100).toFixed(2) + '%';
+      }
+
+      // Update Simulation Phase Telemetry
+      if (phaseEl) {
+        for (let i = 0; i < phases.length; i++) {
+          if (linearProgress <= phases[i].threshold || i === phases.length - 1) {
+            if (phaseEl.textContent !== phases[i].text) {
+              phaseEl.textContent = phases[i].text;
+            }
+            break;
+          }
+        }
+      }
+
+      // Render Particle Canvas
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Outro dispersion trigger at 3.75s
+        if (linearProgress >= 0.93 && !dispersed) {
+          dispersed = true;
+          for (let p of particles) {
+            const dx = p.x - canvas.width * 0.5;
+            const dy = p.y - canvas.height * 0.5;
+            const angle = Math.atan2(dy, dx);
+            const speed = (4.0 + Math.random() * 6.0) * dpr;
+            p.vx = Math.cos(angle) * speed;
+            p.vy = Math.sin(angle) * speed;
+          }
+        }
+
+        const timeSec = now * 0.001;
+
+        // Draw proximity filaments between adjacent nodes
+        ctx.lineWidth = 0.5 * dpr;
+        const filamentDist = 68 * dpr;
+        const filamentDistSq = filamentDist * filamentDist;
+
+        for (let i = 0; i < particles.length; i++) {
+          const p1 = particles[i];
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j];
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < filamentDistSq) {
+              const alpha = (1.0 - Math.sqrt(distSq) / filamentDist) * 0.14 * (1.0 - (dispersed ? 0.8 : 0));
+              ctx.strokeStyle = `rgba(94, 234, 212, ${alpha})`;
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Draw individual particles
+        for (let p of particles) {
+          if (!dispersed) {
+            // Harmonic wave drift
+            p.x += p.vx + Math.sin(timeSec * 0.8 + p.phase) * 0.35 * dpr;
+            p.y += p.vy + Math.cos(timeSec * 0.8 + p.phase) * 0.35 * dpr;
+
+            // Subtle mouse repulsion
+            const mdx = p.x - mouse.x;
+            const mdy = p.y - mouse.y;
+            const mDistSq = mdx * mdx + mdy * mdy;
+            const mThresh = 110 * dpr;
+            if (mDistSq < mThresh * mThresh && mDistSq > 1) {
+              const force = (1.0 - Math.sqrt(mDistSq) / mThresh) * 1.5;
+              p.x += (mdx / Math.sqrt(mDistSq)) * force * dpr;
+              p.y += (mdy / Math.sqrt(mDistSq)) * force * dpr;
+            }
+
+            // Wrap around boundaries
+            if (p.x < 0) p.x = canvas.width;
+            else if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            else if (p.y > canvas.height) p.y = 0;
+          } else {
+            // Outro accelerated flight
+            p.x += p.vx;
+            p.y += p.vy;
+          }
+
+          const pulse = Math.sin(timeSec * 2.5 + p.phase) * 0.3 + 0.7;
+          let fillStyle = 'rgba(255, 255, 255, 0.6)';
+          if (p.colorType === 'teal') {
+            fillStyle = `rgba(94, 234, 212, ${0.45 * pulse})`;
+          } else if (p.colorType === 'violet') {
+            fillStyle = `rgba(192, 132, 252, ${0.4 * pulse})`;
+          } else {
+            fillStyle = `rgba(241, 245, 249, ${0.5 * pulse})`;
+          }
+
+          ctx.fillStyle = fillStyle;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.baseRadius * pulse, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      if (linearProgress < 1.0) {
+        animFrameId = requestAnimationFrame(tick);
+      } else {
+        // Enforce exact 4.0 second (4,000 ms) minimum display duration
+        splash.classList.add('fade-out');
+        setTimeout(() => {
+          splash.classList.add('hidden');
+          if (animFrameId) cancelAnimationFrame(animFrameId);
+        }, 750);
+      }
+    };
+
+    animFrameId = requestAnimationFrame(tick);
   }
 
   get activeEngine() {

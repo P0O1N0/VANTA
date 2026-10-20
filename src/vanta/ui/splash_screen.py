@@ -1,7 +1,7 @@
 """
-VANTA Premium Animated Startup Screen.
+VANTA Bespoke Animated Startup Screen.
 
-Displays a dark, minimal, generative-art startup experience introducing VANTA,
+Displays a dark, minimal, generative-life startup experience introducing VANTA,
 acknowledging its creator (P O N / @P0O1N0), and maintaining an event-loop-based
 4.0-second display duration before smoothly transitioning to the main studio window.
 """
@@ -35,9 +35,11 @@ class VantaSplashScreen(QWidget):
     Features:
     - Event-loop based timing (no blocking sleeps).
     - Enforces a minimum 4.0-second (4,000 ms) display time.
-    - Mathematical generative motif with rotating orbital rings and soliton core.
+    - Architectural geometric emblem with soliton harmonic manifold.
+    - Living ambient harmonic stardust particle veil.
+    - Live kinetic tabular counter and simulation phase telemetry.
     - Precise typographic hierarchy and creator attribution.
-    - Smooth fade-in and fade-out transitions.
+    - Smooth fade-in and outro dissolve.
     """
 
     finished = Signal()
@@ -53,6 +55,21 @@ class VantaSplashScreen(QWidget):
         self._opacity = 0.0
         self._is_closing = False
         self._on_finished = on_finished
+
+        # Ambient floating stardust nodes (dx, dy, radius, phase)
+        self._particles = [
+            (math.sin(i * 1.7) * 260, math.cos(i * 2.3) * 160, 0.8 + (i % 3) * 0.4, i * 0.4)
+            for i in range(32)
+        ]
+
+        # Phase telemetry milestones
+        self._phases = [
+            (0.18, "NUCLEATING PHASE MANIFOLDS"),
+            (0.42, "CALIBRATING REACTION-DIFFUSION MATRICES"),
+            (0.68, "INITIALIZING SYNAPTIC VECTOR FIELDS"),
+            (0.88, "SYNCHRONIZING HYDRODYNAMIC BOUNDARIES"),
+            (1.00, "RESONANCE ACHIEVED // STUDIO READY"),
+        ]
 
         # Center on primary screen
         screen = QApplication.primaryScreen()
@@ -114,130 +131,203 @@ class VantaSplashScreen(QWidget):
         progress = min(1.0, elapsed / self._min_duration)
         w = self.width()
         h = self.height()
+        cx = w / 2
 
         painter.setOpacity(self._opacity)
 
-        # 1. Background Surface (Deep Graphite with subtle radial falloff)
+        # 1. Background Surface (Deep Obsidian Void with subtle radial falloff)
         bg_rect = QRectF(0, 0, w, h)
         bg_path = QPainterPath()
         bg_path.addRoundedRect(bg_rect, 14, 14)
 
-        grad = QRadialGradient(w / 2, h / 2, w * 0.75)
-        grad.setColorAt(0.0, QColor(16, 20, 32))
-        grad.setColorAt(0.7, QColor(10, 13, 22))
-        grad.setColorAt(1.0, QColor(6, 8, 14))
+        grad = QRadialGradient(cx, h / 2, w * 0.75)
+        grad.setColorAt(0.0, QColor(14, 18, 28))
+        grad.setColorAt(0.7, QColor(8, 10, 16))
+        grad.setColorAt(1.0, QColor(4, 5, 8))
 
         painter.fillPath(bg_path, QBrush(grad))
 
         # 1px Subtle Glass Border
-        border_pen = QPen(QColor(255, 255, 255, 24), 1.0)
+        border_pen = QPen(QColor(255, 255, 255, 18), 1.0)
         painter.setPen(border_pen)
         painter.drawPath(bg_path)
 
-        # 2. Generative Abstract Emblem (Soliton & Orbital Life Core)
-        cx = w / 2
-        cy = 125
-        t_angle = elapsed * 1.25  # Smooth continuous rotation
-
-        # Soft ambient glow behind emblem
-        glow_grad = QRadialGradient(cx, cy, 65)
-        glow_grad.setColorAt(0.0, QColor(0, 245, 212, 38))
-        glow_grad.setColorAt(0.5, QColor(138, 43, 226, 22))
-        glow_grad.setColorAt(1.0, QColor(0, 0, 0, 0))
+        # 2. Ambient Harmonic Stardust Particles
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(glow_grad))
-        painter.drawEllipse(QPointF(cx, cy), 65, 65)
+        for px, py, pr, pphase in self._particles:
+            cur_x = cx + px + math.sin(elapsed * 0.8 + pphase) * 12.0
+            cur_y = (h / 2) + py + math.cos(elapsed * 0.8 + pphase) * 10.0
+            p_pulse = 0.5 + 0.5 * math.sin(elapsed * 2.0 + pphase)
+            p_color = QColor(94, 234, 212, int(45 * p_pulse)) if (pphase > 2.0) else QColor(241, 245, 249, int(40 * p_pulse))
+            painter.setBrush(QBrush(p_color))
+            painter.drawEllipse(QPointF(cur_x, cur_y), pr, pr)
 
-        # Outer orbital ring (subtle dashed cyan)
-        outer_pen = QPen(QColor(0, 245, 212, 90), 1.2)
-        outer_pen.setDashPattern([3, 5])
-        painter.setPen(outer_pen)
+        # 3. Top Telemetry Chip
+        telem_font = QFont("Consolas", 8, QFont.Weight.Medium)
+        telem_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 1.8)
+        painter.setFont(telem_font)
+        painter.setPen(QColor(100, 116, 139))
+        painter.drawText(QRectF(0, 24, w, 18), Qt.AlignmentFlag.AlignCenter, "[ FIELD DYNAMICS ENGINE :: BUILD 2026.10 ]")
+
+        # 4. Architectural Bespoke Emblem (Soliton & Modernist V)
+        cy = 110
+        t_angle = elapsed * 1.1
+
+        # Radiant halo
+        halo_pulse = 0.5 + 0.5 * math.sin(elapsed * 2.5)
+        halo_rad = 34 + halo_pulse * 6
+        halo_grad = QRadialGradient(cx, cy, halo_rad)
+        halo_grad.setColorAt(0.0, QColor(94, 234, 212, 35))
+        halo_grad.setColorAt(0.5, QColor(129, 140, 248, 16))
+        halo_grad.setColorAt(1.0, QColor(0, 0, 0, 0))
+        painter.setBrush(QBrush(halo_grad))
+        painter.drawEllipse(QPointF(cx, cy), halo_rad, halo_rad)
+
+        # Outer Reticle (Dashed Precision Ring)
+        reticle_pen = QPen(QColor(255, 255, 255, 24), 1.0)
+        reticle_pen.setDashPattern([3, 7])
+        painter.setPen(reticle_pen)
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.save()
         painter.translate(cx, cy)
-        painter.rotate(math.degrees(t_angle * 0.45))
-        painter.drawEllipse(QPointF(0, 0), 44, 44)
+        painter.rotate(math.degrees(elapsed * 0.2))
+        painter.drawEllipse(QPointF(0, 0), 40, 40)
         painter.restore()
 
-        # Inner counter-rotating ring with phase nodes
-        inner_pen = QPen(QColor(192, 132, 252, 110), 1.0)
-        painter.setPen(inner_pen)
-        painter.save()
-        painter.translate(cx, cy)
-        painter.rotate(-math.degrees(t_angle * 0.65))
-        painter.drawEllipse(QPointF(0, 0), 28, 28)
+        # Registration Crosshairs
+        reg_pen = QPen(QColor(255, 255, 255, 45), 1.0)
+        painter.setPen(reg_pen)
+        painter.drawLine(QPointF(cx, cy - 44), QPointF(cx, cy - 38))
+        painter.drawLine(QPointF(cx, cy + 38), QPointF(cx, cy + 44))
+        painter.drawLine(QPointF(cx - 44, cy), QPointF(cx - 38, cy))
+        painter.drawLine(QPointF(cx + 38, cy), QPointF(cx + 44, cy))
 
-        # 3 Orbiting micro-satellites (trigonometric cellular nodes)
+        # Soliton Harmonic Ribbon (Bezier Path)
+        soliton_path = QPainterPath()
+        soliton_path.moveTo(cx - 18, cy - 8)
+        soliton_path.quadTo(cx, cy + 16, cx + 18, cy - 8)
+        soliton_path.cubicTo(cx + 28, cy - 20, cx + 24, cy - 30, cx + 12, cy - 30)
+        soliton_path.cubicTo(cx - 2, cy - 30, cx - 8, cy - 14, cx - 8, cy + 2)
+        soliton_pen = QPen(QColor(94, 234, 212, 180), 1.6)
+        soliton_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(soliton_pen)
+        painter.drawPath(soliton_path)
+
+        # Architectural V Arms
+        v_pen = QPen(QColor(226, 232, 240, 220), 2.6)
+        v_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(v_pen)
+        painter.drawLine(QPointF(cx - 24, cy - 18), QPointF(cx, cy + 26))
+        painter.drawLine(QPointF(cx + 24, cy - 18), QPointF(cx, cy + 26))
+
+        # Central Singularity Focal Core
+        core_grad = QRadialGradient(cx, cy - 3, 5.0)
+        core_grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+        core_grad.setColorAt(0.5, QColor(94, 234, 212, 200))
+        core_grad.setColorAt(1.0, QColor(94, 234, 212, 0))
         painter.setPen(Qt.PenStyle.NoPen)
-        for i in range(3):
-            angle = (i * (2 * math.pi / 3))
-            nx = 28 * math.cos(angle)
-            ny = 28 * math.sin(angle)
-            painter.setBrush(QBrush(QColor(0, 245, 212, 220)))
-            painter.drawEllipse(QPointF(nx, ny), 2.5, 2.5)
-        painter.restore()
-
-        # Central Soliton Nucleus
-        pulse = 0.5 + 0.5 * math.sin(elapsed * 3.5)
-        core_radius = 8.5 + pulse * 1.5
-        core_grad = QRadialGradient(cx, cy, core_radius)
-        core_grad.setColorAt(0.0, QColor(255, 255, 255, 240))
-        core_grad.setColorAt(0.6, QColor(0, 245, 212, 200))
-        core_grad.setColorAt(1.0, QColor(138, 43, 226, 0))
         painter.setBrush(QBrush(core_grad))
-        painter.drawEllipse(QPointF(cx, cy), core_radius, core_radius)
+        painter.drawEllipse(QPointF(cx, cy - 3), 4.5, 4.5)
 
-        # 3. Typography: Primary Title "VANTA"
-        title_font = QFont("Segoe UI", 32, QFont.Weight.Bold)
-        title_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 7.0)
+        # 5. Typographic Hierarchy: Primary Title "VANTA"
+        title_font = QFont("Segoe UI", 34, QFont.Weight.Bold)
+        title_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 8.0)
         painter.setFont(title_font)
-        painter.setPen(QColor(255, 255, 255))
-        painter.drawText(QRectF(0, 205, w, 44), Qt.AlignmentFlag.AlignCenter, APP_NAME)
+        painter.setPen(QColor(248, 250, 252))
+        painter.drawText(QRectF(0, 188, w, 44), Qt.AlignmentFlag.AlignCenter, APP_NAME)
 
         # Subtitle: "GENERATIVE LIFE STUDIO"
-        sub_font = QFont("Segoe UI", 9, QFont.Weight.DemiBold)
-        sub_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 4.0)
+        sub_font = QFont("Segoe UI", 8, QFont.Weight.DemiBold)
+        sub_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 4.5)
         painter.setFont(sub_font)
-        painter.setPen(QColor(0, 245, 212, 220))
-        painter.drawText(QRectF(0, 254, w, 24), Qt.AlignmentFlag.AlignCenter, APP_DESCRIPTOR.upper())
+        painter.setPen(QColor(148, 163, 184))
+        painter.drawText(QRectF(0, 236, w, 20), Qt.AlignmentFlag.AlignCenter, APP_DESCRIPTOR.upper())
 
-        # Thin Separator Accent
-        sep_pen = QPen(QColor(255, 255, 255, 20), 1.0)
-        painter.setPen(sep_pen)
-        painter.drawLine(QPointF(cx - 40, 288), QPointF(cx + 40, 288))
+        # Hairline Subtitle Accents
+        accent_pen = QPen(QColor(255, 255, 255, 25), 1.0)
+        painter.setPen(accent_pen)
+        painter.drawLine(QPointF(cx - 150, 246), QPointF(cx - 110, 246))
+        painter.drawLine(QPointF(cx + 110, 246), QPointF(cx + 150, 246))
 
-        # 4. Creator Attribution:
-        # "Created by P O N"
-        author_font = QFont("Segoe UI", 10, QFont.Weight.Medium)
-        author_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 1.8)
-        painter.setFont(author_font)
-        painter.setPen(QColor(160, 174, 192))
-        painter.drawText(QRectF(0, 304, w, 22), Qt.AlignmentFlag.AlignCenter, f"Created by {AUTHOR_NAME}")
+        # 6. Creator Attribution Pill: "Created by P O N / @P0O1N0"
+        pill_w = 260.0
+        pill_h = 28.0
+        pill_x = (w - pill_w) / 2
+        pill_y = 276.0
 
-        # "@P0O1N0"
-        handle_font = QFont("Consolas", 9, QFont.Weight.DemiBold)
+        pill_rect = QRectF(pill_x, pill_y, pill_w, pill_h)
+        pill_path = QPainterPath()
+        pill_path.addRoundedRect(pill_rect, 14, 14)
+
+        painter.fillPath(pill_path, QBrush(QColor(255, 255, 255, 8)))
+        pill_border = QPen(QColor(255, 255, 255, 18), 1.0)
+        painter.setPen(pill_border)
+        painter.drawPath(pill_path)
+
+        # Status Dot (Emerald Pulse)
+        dot_pulse = 0.4 + 0.6 * math.sin(elapsed * 3.0)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(QColor(94, 234, 212, int(255 * dot_pulse))))
+        painter.drawEllipse(QPointF(pill_x + 18, pill_y + 14), 3.0, 3.0)
+
+        # Attribution Text
+        attr_font = QFont("Segoe UI", 9, QFont.Weight.Medium)
+        attr_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 1.2)
+        painter.setFont(attr_font)
+        painter.setPen(QColor(203, 213, 225))
+        painter.drawText(QRectF(pill_x + 28, pill_y, 130, pill_h), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, f"Created by {AUTHOR_NAME}")
+
+        # Separator & Handle
+        painter.setPen(QColor(255, 255, 255, 50))
+        painter.drawText(QRectF(pill_x + 160, pill_y, 10, pill_h), Qt.AlignmentFlag.AlignCenter, "/")
+
+        handle_font = QFont("Consolas", 8, QFont.Weight.DemiBold)
         handle_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 1.2)
         painter.setFont(handle_font)
-        painter.setPen(QColor(192, 132, 252, 220))
-        painter.drawText(QRectF(0, 328, w, 20), Qt.AlignmentFlag.AlignCenter, "@P0O1N0")
+        painter.setPen(QColor(192, 132, 252))
+        painter.drawText(QRectF(pill_x + 172, pill_y, 76, pill_h), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, "@P0O1N0")
 
-        # 5. Fine Progress Hairline (Smooth 4.0-second completion)
-        bar_w = 260.0
-        bar_h = 2.0
-        bar_x = (w - bar_w) / 2
-        bar_y = 376.0
+        # 7. Live Kinetic Counter & Simulation Phase Telemetry
+        ease_progress = 1.0 - math.pow(1.0 - progress, 3)
+        display_percent = min(100, int(ease_progress * 100))
 
-        # Background Track
+        # Determine active phase text
+        phase_text = self._phases[-1][1]
+        for th, text in self._phases:
+            if progress <= th:
+                phase_text = text
+                break
+
+        meter_w = 340.0
+        meter_x = (w - meter_w) / 2
+        meter_y = 344.0
+
+        # Phase Status
+        phase_font = QFont("Consolas", 7, QFont.Weight.Normal)
+        phase_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 1.0)
+        painter.setFont(phase_font)
+        painter.setPen(QColor(100, 116, 139))
+        painter.drawText(QRectF(meter_x, meter_y, meter_w - 60, 16), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, phase_text)
+
+        # Tabular Counter
+        counter_font = QFont("Consolas", 8, QFont.Weight.Bold)
+        painter.setFont(counter_font)
+        painter.setPen(QColor(241, 245, 249))
+        painter.drawText(QRectF(meter_x + meter_w - 50, meter_y, 50, 16), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight, f"{display_percent:03d}%")
+
+        # 8. Razor Hairline Progress Track (1.5px)
+        track_y = meter_y + 22.0
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(QColor(255, 255, 255, 18)))
-        painter.drawRoundedRect(QRectF(bar_x, bar_y, bar_w, bar_h), 1, 1)
+        painter.setBrush(QBrush(QColor(255, 255, 255, 16)))
+        painter.drawRoundedRect(QRectF(meter_x, track_y, meter_w, 1.5), 1, 1)
 
         # Active Fill
-        fill_w = max(4.0, bar_w * progress)
-        fill_grad = QLinearGradient(bar_x, bar_y, bar_x + bar_w, bar_y)
-        fill_grad.setColorAt(0.0, QColor(0, 245, 212, 220))
-        fill_grad.setColorAt(1.0, QColor(138, 43, 226, 240))
+        fill_w = max(4.0, meter_w * progress)
+        fill_grad = QLinearGradient(meter_x, track_y, meter_x + meter_w, track_y)
+        fill_grad.setColorAt(0.0, QColor(99, 102, 241, 200))
+        fill_grad.setColorAt(0.85, QColor(94, 234, 212, 240))
+        fill_grad.setColorAt(1.0, QColor(255, 255, 255, 255))
         painter.setBrush(QBrush(fill_grad))
-        painter.drawRoundedRect(QRectF(bar_x, bar_y, fill_w, bar_h), 1, 1)
+        painter.drawRoundedRect(QRectF(meter_x, track_y, fill_w, 1.5), 1, 1)
 
         painter.end()

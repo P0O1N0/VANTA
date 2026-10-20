@@ -351,27 +351,88 @@
 
   <!-- Premium Animated Startup Screen (4.0s minimum launch experience) -->
   <div id="vanta-splash" class="vanta-splash">
+    <!-- Living Generative Particle Canvas -->
+    <canvas id="splash-canvas" class="splash-canvas"></canvas>
+
+    <!-- Analog Film Grain Noise Filter -->
+    <svg class="splash-grain-svg" aria-hidden="true" style="position: absolute; width: 0; height: 0; pointer-events: none;">
+      <filter id="vanta-grain-filter">
+        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.05 0" />
+      </filter>
+    </svg>
+    <div class="splash-grain-overlay" aria-hidden="true"></div>
+
+    <!-- Central Architectural Composition -->
     <div class="splash-card">
-      <div class="splash-emblem">
-        <div class="emblem-halo"></div>
-        <div class="emblem-ring-outer"></div>
-        <div class="emblem-ring-inner"></div>
-        <div class="emblem-core">
-          <div class="emblem-node node-1"></div>
-          <div class="emblem-node node-2"></div>
-          <div class="emblem-node node-3"></div>
-        </div>
+      <div class="splash-telemetry">[ FIELD DYNAMICS ENGINE :: BUILD 2026.10 ]</div>
+
+      <div class="splash-emblem-wrap">
+        <svg class="splash-emblem-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="v-metal" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+              <stop offset="50%" stop-color="#cbd5e1" stop-opacity="0.85" />
+              <stop offset="100%" stop-color="#64748b" stop-opacity="0.6" />
+            </linearGradient>
+            <linearGradient id="v-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#5eead4" stop-opacity="0.9" />
+              <stop offset="50%" stop-color="#818cf8" stop-opacity="0.8" />
+              <stop offset="100%" stop-color="#c084fc" stop-opacity="0.7" />
+            </linearGradient>
+            <radialGradient id="v-halo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#5eead4" stop-opacity="0.3" />
+              <stop offset="45%" stop-color="#818cf8" stop-opacity="0.12" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+
+          <!-- Outer Calibration & Optical Reticle -->
+          <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="3 7" class="emblem-reticle" />
+          <line x1="60" y1="2" x2="60" y2="8" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
+          <line x1="60" y1="112" x2="60" y2="118" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
+          <line x1="2" y1="60" x2="8" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
+          <line x1="112" y1="60" x2="118" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
+
+          <!-- Radiant Atmosphere -->
+          <circle cx="60" cy="54" r="32" fill="url(#v-halo)" class="emblem-halo-pulse" />
+
+          <!-- Bespoke Soliton Harmonic Ribbon -->
+          <path class="emblem-soliton" d="M 38,44 Q 60,72 82,44 C 94,30 94,18 80,18 C 66,18 60,34 60,54 C 60,74 54,90 40,90 C 26,90 26,78 38,64" stroke="url(#v-accent)" stroke-width="1.8" stroke-linecap="round" />
+
+          <!-- Architectural V Arms -->
+          <path class="emblem-v-arm emblem-v-left" d="M 28,32 L 60,94" stroke="url(#v-metal)" stroke-width="2.8" stroke-linecap="round" />
+          <path class="emblem-v-arm emblem-v-right" d="M 92,32 L 60,94" stroke="url(#v-metal)" stroke-width="2.8" stroke-linecap="round" />
+
+          <!-- Singularity Focal Core -->
+          <circle cx="60" cy="54" r="3.2" fill="#ffffff" class="emblem-core-dot" />
+        </svg>
       </div>
+
       <div class="splash-title-box">
         <h1 class="splash-title">VANTA</h1>
-        <div class="splash-subtitle">GENERATIVE LIFE STUDIO</div>
+        <div class="splash-subtitle-wrap">
+          <span class="splash-sub-line"></span>
+          <span class="splash-subtitle">GENERATIVE LIFE STUDIO</span>
+          <span class="splash-sub-line"></span>
+        </div>
       </div>
+
       <div class="splash-attribution">
+        <span class="splash-status-dot"></span>
         <span class="splash-attr-text">Created by P O N</span>
+        <span class="splash-attr-sep">/</span>
         <span class="splash-attr-handle">@P0O1N0</span>
       </div>
-      <div class="splash-progress-track">
-        <div id="splash-progress-fill" class="splash-progress-fill"></div>
+
+      <div class="splash-meter">
+        <div class="splash-counter-row">
+          <span id="splash-phase" class="splash-phase">NUCLEATING PHASE MANIFOLDS</span>
+          <span id="splash-counter" class="splash-counter">000%</span>
+        </div>
+        <div class="splash-progress-track">
+          <div id="splash-progress-fill" class="splash-progress-fill"></div>
+        </div>
       </div>
     </div>
   </div>
