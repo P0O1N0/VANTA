@@ -141,6 +141,51 @@ const WORLDS = [
     badge: "Gray-Scott Patterns",
     desc: "Alan Turing's morphogenetic pattern formation: chemical activators and inhibitors generating leopards spots, coral reefs, and soliton pulses.",
     physics: "Coupled Non-Linear Reaction-Diffusion Stencil"
+  },
+  {
+    id: "lenia",
+    name: "Lenia Continuous Life",
+    category: "biology",
+    tag: "Continuous Automata",
+    badge: "Soliton Organisms",
+    desc: "Continuous space-time artificial life exhibiting self-organizing autonomous solitons, gliders, and morphing cellular micro-organisms.",
+    physics: "Continuous Convolution Field & Unimodal Growth Mapping"
+  },
+  {
+    id: "ferrofluid",
+    name: "Ferrofluid Dynamics",
+    category: "physics",
+    tag: "Magnetic Hydrodynamics",
+    badge: "Rosensweig Instability",
+    desc: "Superparamagnetic liquid forming dramatic Rosensweig peak spikes, dynamic dipole fields, and specular chrome metallic reflections.",
+    physics: "Rosensweig Spikes & Specular Normal Shading"
+  },
+  {
+    id: "fractal_growth",
+    name: "Fractal Dendrite (DLA)",
+    category: "physics",
+    tag: "Dendritic Morphogenesis",
+    badge: "DLA Fractal Clusters",
+    desc: "Brownian particles diffusing randomly and aggregating onto stationary nucleation seeds, forming intricate fractal mineral trees and coral dendrites.",
+    physics: "Witten-Sander Diffusion-Limited Aggregation (DLA)"
+  },
+  {
+    id: "excitable_medium",
+    name: "Excitable Medium Waves",
+    category: "biology",
+    tag: "Biochemical Waves",
+    badge: "Spiral Wave Rotors",
+    desc: "FitzHugh-Nagumo and Barkley activator-inhibitor dynamics producing self-sustained spiral waves, wavefront collisions, and refractory boundaries.",
+    physics: "Barkley Reaction-Diffusion Excitable Stencil"
+  },
+  {
+    id: "thermal_convection",
+    name: "Rayleigh-Bénard Convection",
+    category: "physics",
+    tag: "Hydrodynamic Convection",
+    badge: "Thermal Plumes",
+    desc: "Buoyancy-driven fluid convection under the Boussinesq approximation, generating Rayleigh-Bénard convective rolls, rising thermal plumes, and tracer streamlines.",
+    physics: "Coupled Boussinesq Buoyant Thermal-Fluid Solver"
   }
 ];
 
@@ -1339,6 +1384,986 @@ class ReactionDiffusionEngine {
 }
 
 /* ========================================================================= */
+/* 9. Lenia Engine (Continuous Artificial Life)                              */
+/* ========================================================================= */
+class LeniaEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.gridW = 160;
+    this.gridH = 100;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
+
+    const size = this.gridW * this.gridH;
+    this.state = new Float32Array(size);
+    this.nextState = new Float32Array(size);
+    this.field = new Float32Array(size);
+
+    this.muG = 0.15;
+    this.sigmaG = 0.017;
+    this.muK = 0.5;
+    this.sigmaK = 0.15;
+    this.radius = 12;
+    this.dt = 0.15;
+
+    this.palette = PALETTES.bioluminescence;
+    this.buildKernel();
+    this.init();
+  }
+
+  buildKernel() {
+    this.kernelOffsets = [];
+    let sum = 0;
+    const r = this.radius;
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const dist = Math.hypot(dx, dy);
+        if (dist <= r) {
+          const rho = dist / r;
+          const diff = rho - this.muK;
+          const weight = Math.exp(-(diff * diff) / (2 * this.sigmaK * this.sigmaK));
+          this.kernelOffsets.push({ dx, dy, w: weight });
+          sum += weight;
+        }
+      }
+    }
+    if (sum > 0) {
+      for (let i = 0; i < this.kernelOffsets.length; i++) {
+        this.kernelOffsets[i].w /= sum;
+      }
+    }
+  }
+
+  growth(u) {
+    const diff = u - this.muG;
+    return 2.0 * Math.exp(-(diff * diff) / (2 * this.sigmaG * this.sigmaG)) - 1.0;
+  }
+
+  init(seed = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    this.state.fill(0);
+    this.nextState.fill(0);
+
+    const cx = Math.floor(gw * 0.5);
+    const cy = Math.floor(gh * 0.5);
+
+    // Orbium Soliton glider configuration
+    for (let dy = -22; dy <= 22; dy++) {
+      for (let dx = -22; dx <= 22; dx++) {
+        const d = Math.hypot(dx, dy);
+        if (d < 20) {
+          const rNorm = d / 20;
+          const angle = Math.atan2(dy, dx);
+          const val = Math.exp(-Math.pow(rNorm - 0.55, 2) / 0.05) * (0.7 + 0.3 * Math.cos(angle - 0.4));
+          const idx = (cy + dy) * gw + (cx + dx);
+          this.state[idx] = Math.max(0, Math.min(1, val));
+        }
+      }
+    }
+
+    const sX = cx + 38;
+    const sY = cy - 18;
+    if (sX < gw - 25 && sY > 25) {
+      for (let dy = -14; dy <= 14; dy++) {
+        for (let dx = -14; dx <= 14; dx++) {
+          const d = Math.hypot(dx, dy);
+          if (d < 12) {
+            const val = Math.exp(-Math.pow(d / 12 - 0.5, 2) / 0.04) * 0.9;
+            const idx = (sY + dy) * gw + (sX + dx);
+            this.state[idx] = Math.max(0, Math.min(1, val));
+          }
+        }
+      }
+    }
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const state = this.state;
+    const nextState = this.nextState;
+    const field = this.field;
+    const kernel = this.kernelOffsets;
+    const kLen = kernel.length;
+
+    const effDt = this.dt * (env ? env.oxygen : 1.0);
+
+    // 1. Convolution: field = K * state
+    for (let y = 0; y < gh; y++) {
+      const yOffset = y * gw;
+      for (let x = 0; x < gw; x++) {
+        let sum = 0;
+        for (let k = 0; k < kLen; k++) {
+          const ko = kernel[k];
+          let nx = (x + ko.dx) % gw;
+          if (nx < 0) nx += gw;
+          let ny = (y + ko.dy) % gh;
+          if (ny < 0) ny += gh;
+          sum += state[ny * gw + nx] * ko.w;
+        }
+        field[yOffset + x] = sum;
+      }
+    }
+
+    // 2. Growth update
+    for (let i = 0; i < state.length; i++) {
+      const u = field[i];
+      const g = this.growth(u);
+      let val = state[i] + effDt * g;
+      if (val < 0.001) val = 0;
+      else if (val > 1.0) val = 1.0;
+      nextState[i] = val;
+    }
+
+    // 3. Mouse interaction
+    if (mouse && mouse.down) {
+      const scaleX = gw / this.canvas.width;
+      const scaleY = gh / this.canvas.height;
+      const mx = Math.floor(mouse.x * scaleX);
+      const my = Math.floor(mouse.y * scaleY);
+      const brushR = 9;
+
+      for (let dy = -brushR; dy <= brushR; dy++) {
+        for (let dx = -brushR; dx <= brushR; dx++) {
+          const px = mx + dx;
+          const py = my + dy;
+          if (px >= 0 && px < gw && py >= 0 && py < gh) {
+            const d = Math.hypot(dx, dy);
+            if (d <= brushR) {
+              const idx = py * gw + px;
+              if (mouse.button === 2) {
+                nextState[idx] = 0.0;
+              } else {
+                const add = Math.exp(-(d * d) / (brushR * 2.5)) * 0.8;
+                nextState[idx] = Math.min(1.0, nextState[idx] + add);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    this.state.set(nextState);
+  }
+
+  render() {
+    const state = this.state;
+    const data = this.offImgData.data;
+    const pal = this.palette;
+
+    let pIdx = 0;
+    for (let i = 0; i < state.length; i++) {
+      const val = state[i];
+      if (val < 0.002) {
+        data[pIdx] = 6;
+        data[pIdx + 1] = 6;
+        data[pIdx + 2] = 10;
+        data[pIdx + 3] = 255;
+      } else {
+        const t = Math.min(val * 3.2, 2.999);
+        const idx = Math.floor(t);
+        const frac = t - idx;
+        const c1 = pal[idx];
+        const c2 = pal[idx + 1] || pal[idx];
+
+        data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
+        data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
+        data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+        data[pIdx + 3] = 255;
+      }
+      pIdx += 4;
+    }
+
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
+  }
+}
+
+/* ========================================================================= */
+/* 10. Ferrofluid Engine (Magnetic Hydrodynamics & Rosensweig Instability)   */
+/* ========================================================================= */
+class FerrofluidEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.gridW = 180;
+    this.gridH = 115;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
+
+    const size = this.gridW * this.gridH;
+    this.h = new Float32Array(size);
+    this.vh = new Float32Array(size);
+    this.magField = new Float32Array(size);
+
+    this.dipoles = [
+      { x: 0.35, y: 0.45, z: 0.18, strength: 3.2, speed: 0.8, angle: 0.0, radius: 0.22 },
+      { x: 0.65, y: 0.55, z: 0.16, strength: 2.8, speed: -0.65, angle: 2.1, radius: 0.26 },
+      { x: 0.50, y: 0.32, z: 0.22, strength: 3.0, speed: 1.1, angle: 4.2, radius: 0.18 }
+    ];
+
+    this.tension = 0.18;
+    this.viscosity = 0.06;
+    this.magCoupling = 1.45;
+    this.time = 0;
+    this.palette = PALETTES.monochrome;
+    this.init();
+  }
+
+  init() {
+    this.h.fill(0);
+    this.vh.fill(0);
+    this.magField.fill(0);
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const h = this.h;
+    const vh = this.vh;
+    const mf = this.magField;
+
+    this.time += dt;
+    const effVisc = 1.0 - (env ? env.viscosity : this.viscosity) * 2.5;
+    const effGravity = 0.04 + (env ? Math.max(0, env.gravity * 0.05) : 0);
+
+    for (let d = 0; d < this.dipoles.length; d++) {
+      const dip = this.dipoles[d];
+      dip.angle += dip.speed * dt * 0.8;
+      dip.currX = dip.x + Math.cos(dip.angle) * dip.radius;
+      dip.currY = dip.y + Math.sin(dip.angle) * dip.radius;
+    }
+
+    let hasMouseMagnet = false;
+    let mouseMagX = 0, mouseMagY = 0;
+    if (mouse) {
+      mouseMagX = mouse.x / this.canvas.width;
+      mouseMagY = mouse.y / this.canvas.height;
+      hasMouseMagnet = true;
+    }
+
+    for (let y = 0; y < gh; y++) {
+      const ny = y / gh;
+      const yOffset = y * gw;
+      for (let x = 0; x < gw; x++) {
+        const nx = x / gw;
+        let bSum = 0;
+
+        for (let d = 0; d < this.dipoles.length; d++) {
+          const dip = this.dipoles[d];
+          const dx = nx - dip.currX;
+          const dy = ny - dip.currY;
+          const distSq = dx * dx + dy * dy + dip.z * dip.z;
+          bSum += dip.strength / Math.pow(distSq + 0.005, 1.5);
+        }
+
+        if (hasMouseMagnet) {
+          const dx = nx - mouseMagX;
+          const dy = ny - mouseMagY;
+          const mz = mouse.down ? 0.08 : 0.16;
+          const mStr = mouse.down ? 5.5 : 2.5;
+          const distSq = dx * dx + dy * dy + mz * mz;
+          bSum += mStr / Math.pow(distSq + 0.004, 1.5);
+        }
+
+        mf[yOffset + x] = bSum;
+      }
+    }
+
+    const tension = this.tension;
+    const magC = this.magCoupling * 0.00035;
+
+    for (let y = 1; y < gh - 1; y++) {
+      const yOffset = y * gw;
+      for (let x = 1; x < gw - 1; x++) {
+        const idx = yOffset + x;
+        const lap = h[idx - 1] + h[idx + 1] + h[idx - gw] + h[idx + gw] - 4 * h[idx];
+        const b = mf[idx];
+
+        let fMag = 0;
+        if (b > 12.0) {
+          const excess = b - 12.0;
+          fMag = excess * excess * magC;
+          fMag *= (1.0 + 0.25 * Math.sin(x * 0.7) * Math.cos(y * 0.7));
+        }
+
+        const accel = tension * lap - effGravity * h[idx] + fMag;
+        vh[idx] = (vh[idx] + accel) * effVisc;
+        h[idx] = Math.max(-0.5, Math.min(3.5, h[idx] + vh[idx]));
+      }
+    }
+  }
+
+  render() {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const h = this.h;
+    const data = this.offImgData.data;
+
+    const lx = 0.42, ly = -0.55, lz = 0.72;
+    const hx = lx * 0.5, hy = ly * 0.5, hz = (lz + 1.0) * 0.5;
+    const hLen = Math.hypot(hx, hy, hz);
+    const nhx = hx / hLen, nhy = hy / hLen, nhz = hz / hLen;
+
+    let pIdx = 0;
+    for (let y = 0; y < gh; y++) {
+      const yOffset = y * gw;
+      for (let x = 0; x < gw; x++) {
+        const idx = yOffset + x;
+
+        let nx = 0, ny = 0;
+        if (x > 0 && x < gw - 1) nx = -(h[idx + 1] - h[idx - 1]) * 1.6;
+        if (y > 0 && y < gh - 1) ny = -(h[idx + gw] - h[idx - gw]) * 1.6;
+        let nz = 1.0;
+        const nLen = Math.hypot(nx, ny, nz);
+        nx /= nLen; ny /= nLen; nz /= nLen;
+
+        const nDotL = Math.max(0, nx * lx + ny * ly + nz * lz);
+        const nDotH = Math.max(0, nx * nhx + ny * nhy + nz * nhz);
+        const spec = Math.pow(nDotH, 26);
+        const elev = Math.max(0, Math.min(1.0, (h[idx] + 0.2) / 2.2));
+
+        const baseR = 12 + elev * 28;
+        const baseG = 14 + elev * 32;
+        const baseB = 22 + elev * 54;
+
+        const r = Math.min(255, Math.floor(baseR + nDotL * 45 + spec * 220 + nx * 30));
+        const g = Math.min(255, Math.floor(baseG + nDotL * 50 + spec * 225 + ny * 25));
+        const b = Math.min(255, Math.floor(baseB + nDotL * 70 + spec * 245 + elev * 40));
+
+        data[pIdx] = r;
+        data[pIdx + 1] = g;
+        data[pIdx + 2] = b;
+        data[pIdx + 3] = 255;
+        pIdx += 4;
+      }
+    }
+
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
+  }
+}
+
+/* ========================================================================= */
+/* 11. Fractal Growth Engine (Diffusion-Limited Aggregation DLA)            */
+/* ========================================================================= */
+class FractalGrowthEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.gridW = 320;
+    this.gridH = 200;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
+
+    const size = this.gridW * this.gridH;
+    this.grid = new Int32Array(size);
+
+    this.numWalkers = 1400;
+    this.wx = new Float32Array(this.numWalkers);
+    this.wy = new Float32Array(this.numWalkers);
+
+    this.stickProb = 0.85;
+    this.stepSize = 1.8;
+    this.currentAge = 1;
+    this.clusterRadius = 8;
+    this.palette = PALETTES.amber_ember;
+
+    this.init();
+  }
+
+  init(seed = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    this.grid.fill(0);
+    this.currentAge = 1;
+
+    const cx = Math.floor(gw * 0.5);
+    const cy = Math.floor(gh * 0.5);
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        this.grid[(cy + dy) * gw + (cx + dx)] = this.currentAge++;
+      }
+    }
+    this.clusterRadius = 6;
+
+    for (let i = 0; i < this.numWalkers; i++) {
+      this.respawnWalker(i);
+    }
+  }
+
+  respawnWalker(i) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const cx = gw * 0.5;
+    const cy = gh * 0.5;
+
+    const spawnR = Math.min(Math.max(this.clusterRadius + 14 + Math.random() * 25, 25), Math.min(cx, cy) - 6);
+    const angle = Math.random() * Math.PI * 2;
+    this.wx[i] = cx + Math.cos(angle) * spawnR;
+    this.wy[i] = cy + Math.sin(angle) * spawnR;
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const grid = this.grid;
+    const num = this.numWalkers;
+    const wx = this.wx;
+    const wy = this.wy;
+    const cx = gw * 0.5;
+    const cy = gh * 0.5;
+
+    const stickP = this.stickProb;
+    const tempFactor = env ? Math.max(0.2, (env.temperature + 20) / 45) : 1.0;
+    const stepMag = this.stepSize * tempFactor;
+    const maxR = Math.min(cx, cy) - 4;
+
+    const stepsPerFrame = 6;
+    for (let s = 0; s < stepsPerFrame; s++) {
+      for (let i = 0; i < num; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        let nx = wx[i] + Math.cos(angle) * stepMag;
+        let ny = wy[i] + Math.sin(angle) * stepMag;
+
+        if (env && env.gravity !== 0) {
+          ny += env.gravity * 0.4;
+        }
+
+        const distFromCenter = Math.hypot(nx - cx, ny - cy);
+        if (distFromCenter > maxR || nx < 2 || nx >= gw - 2 || ny < 2 || ny >= gh - 2) {
+          this.respawnWalker(i);
+          continue;
+        }
+
+        const gx = Math.floor(nx);
+        const gy = Math.floor(ny);
+        const idx = gy * gw + gx;
+
+        let attached = false;
+        if (grid[idx - 1] > 0 || grid[idx + 1] > 0 ||
+            grid[idx - gw] > 0 || grid[idx + gw] > 0 ||
+            grid[idx - gw - 1] > 0 || grid[idx - gw + 1] > 0 ||
+            grid[idx + gw - 1] > 0 || grid[idx + gw + 1] > 0) {
+          attached = true;
+        }
+
+        if (attached && Math.random() < stickP) {
+          grid[idx] = this.currentAge++;
+          if (distFromCenter > this.clusterRadius) {
+            this.clusterRadius = distFromCenter;
+          }
+          this.respawnWalker(i);
+        } else {
+          wx[i] = nx;
+          wy[i] = ny;
+        }
+      }
+    }
+
+    if (mouse && mouse.down) {
+      const scaleX = gw / this.canvas.width;
+      const scaleY = gh / this.canvas.height;
+      const mx = Math.floor(mouse.x * scaleX);
+      const my = Math.floor(mouse.y * scaleY);
+
+      if (mx >= 2 && mx < gw - 2 && my >= 2 && my < gh - 2) {
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            if (Math.hypot(dx, dy) <= 2) {
+              grid[(my + dy) * gw + (mx + dx)] = this.currentAge++;
+            }
+          }
+        }
+        const mDist = Math.hypot(mx - cx, my - cy);
+        if (mDist > this.clusterRadius) this.clusterRadius = mDist;
+      }
+    }
+  }
+
+  render() {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const grid = this.grid;
+    const data = this.offImgData.data;
+    const pal = this.palette;
+    const maxAge = Math.max(this.currentAge, 2);
+
+    let pIdx = 0;
+    for (let i = 0; i < grid.length; i++) {
+      const age = grid[i];
+      if (age === 0) {
+        data[pIdx] = 5;
+        data[pIdx + 1] = 6;
+        data[pIdx + 2] = 10;
+        data[pIdx + 3] = 255;
+      } else {
+        const ageNorm = Math.min(1.0, age / maxAge);
+        const t = (1.0 - ageNorm) * 2.99;
+        const idx = Math.floor(t);
+        const frac = t - idx;
+        const c1 = pal[idx];
+        const c2 = pal[idx + 1] || pal[idx];
+
+        data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
+        data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
+        data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+        data[pIdx + 3] = 255;
+      }
+      pIdx += 4;
+    }
+
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
+
+    const scaleX = this.canvas.width / gw;
+    const scaleY = this.canvas.height / gh;
+    this.ctx.fillStyle = "rgba(0, 245, 212, 0.45)";
+    for (let i = 0; i < this.numWalkers; i += 2) {
+      this.ctx.fillRect(this.wx[i] * scaleX, this.wy[i] * scaleY, 1.8, 1.8);
+    }
+  }
+}
+
+/* ========================================================================= */
+/* 12. Excitable Medium Engine (Barkley Reaction-Diffusion Spiral Waves)     */
+/* ========================================================================= */
+class ExcitableMediumEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.gridW = 240;
+    this.gridH = 150;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
+
+    const size = this.gridW * this.gridH;
+    this.u = new Float32Array(size);
+    this.v = new Float32Array(size);
+    this.nextU = new Float32Array(size);
+    this.nextV = new Float32Array(size);
+    this.barrier = new Uint8Array(size);
+
+    this.a = 0.75;
+    this.b = 0.02;
+    this.eps = 0.02;
+    this.diffU = 0.32;
+
+    this.palette = PALETTES.spectral_velvet;
+    this.init();
+  }
+
+  init(seed = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    this.u.fill(0);
+    this.v.fill(0);
+    this.barrier.fill(0);
+
+    const cx = Math.floor(gw * 0.5);
+    const cy = Math.floor(gh * 0.5);
+
+    for (let y = 0; y < gh; y++) {
+      for (let x = 0; x < gw; x++) {
+        const idx = y * gw + x;
+        if (x < cx && y > cy - 8 && y < cy + 8) {
+          this.u[idx] = 1.0;
+        }
+        if (x < cx && y >= cy + 8) {
+          this.v[idx] = 0.55;
+        }
+      }
+    }
+
+    const sX = Math.floor(gw * 0.78);
+    const sY = Math.floor(gh * 0.28);
+    for (let dy = -15; dy <= 0; dy++) {
+      for (let dx = -15; dx <= 15; dx++) {
+        const idx = (sY + dy) * gw + (sX + dx);
+        if (idx >= 0 && idx < this.u.length) {
+          this.u[idx] = 0.95;
+          if (dy < -6) this.v[idx] = 0.6;
+        }
+      }
+    }
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const u = this.u;
+    const v = this.v;
+    const nu = this.nextU;
+    const nv = this.nextV;
+    const barrier = this.barrier;
+
+    const a = this.a;
+    const b = this.b;
+    const eps = this.eps;
+    const dU = this.diffU * (env ? env.viscosity * 6.0 : 1.0);
+    const substeps = 4;
+    const subDt = 0.008;
+
+    for (let sub = 0; sub < substeps; sub++) {
+      for (let y = 1; y < gh - 1; y++) {
+        const yOffset = y * gw;
+        for (let x = 1; x < gw - 1; x++) {
+          const idx = yOffset + x;
+
+          if (barrier[idx]) {
+            nu[idx] = 0;
+            nv[idx] = 0;
+            continue;
+          }
+
+          const uVal = u[idx];
+          const vVal = v[idx];
+          const lapU = u[idx - 1] + u[idx + 1] + u[idx - gw] + u[idx + gw] - 4 * uVal;
+
+          const uThresh = (vVal + b) / a;
+          const f = (1.0 / eps) * uVal * (1.0 - uVal) * (uVal - uThresh);
+          const g = uVal - vVal;
+
+          let newU = uVal + subDt * (f + dU * lapU);
+          let newV = vVal + subDt * g;
+
+          if (newU < 0) newU = 0; else if (newU > 1.0) newU = 1.0;
+          if (newV < 0) newV = 0; else if (newV > 1.0) newV = 1.0;
+
+          nu[idx] = newU;
+          nv[idx] = newV;
+        }
+      }
+
+      u.set(nu);
+      v.set(nv);
+    }
+
+    if (mouse && mouse.down) {
+      const scaleX = gw / this.canvas.width;
+      const scaleY = gh / this.canvas.height;
+      const mx = Math.floor(mouse.x * scaleX);
+      const my = Math.floor(mouse.y * scaleY);
+      const r = 8;
+
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          const px = mx + dx;
+          const py = my + dy;
+          if (px >= 1 && px < gw - 1 && py >= 1 && py < gh - 1) {
+            const idx = py * gw + px;
+            if (mouse.button === 2) {
+              barrier[idx] = 1;
+              u[idx] = 0;
+              v[idx] = 0;
+            } else {
+              if (!barrier[idx]) {
+                u[idx] = 1.0;
+                v[idx] = 0.0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  render() {
+    const u = this.u;
+    const v = this.v;
+    const barrier = this.barrier;
+    const data = this.offImgData.data;
+    const pal = this.palette;
+
+    let pIdx = 0;
+    for (let i = 0; i < u.length; i++) {
+      if (barrier[i]) {
+        data[pIdx] = 75;
+        data[pIdx + 1] = 85;
+        data[pIdx + 2] = 95;
+        data[pIdx + 3] = 255;
+      } else {
+        const uVal = u[i];
+        const vVal = v[i];
+
+        const t = Math.min(uVal * 2.4 + vVal * 0.6, 2.99);
+        const idx = Math.floor(t);
+        const frac = t - idx;
+        const c1 = pal[idx];
+        const c2 = pal[idx + 1] || pal[idx];
+
+        data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
+        data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
+        data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+        data[pIdx + 3] = 255;
+      }
+      pIdx += 4;
+    }
+
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
+  }
+}
+
+/* ========================================================================= */
+/* 13. Thermal Convection Engine (Rayleigh-Bénard Buoyancy & Mantle Plumes)  */
+/* ========================================================================= */
+class ThermalConvectionEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.gridW = 160;
+    this.gridH = 100;
+    this.offCanvas = document.createElement('canvas');
+    this.offCanvas.width = this.gridW;
+    this.offCanvas.height = this.gridH;
+    this.offCtx = this.offCanvas.getContext('2d', { alpha: false });
+    this.offImgData = this.offCtx.createImageData(this.gridW, this.gridH);
+
+    const size = this.gridW * this.gridH;
+    this.temp = new Float32Array(size);
+    this.nextTemp = new Float32Array(size);
+    this.vx = new Float32Array(size);
+    this.vy = new Float32Array(size);
+    this.nextVx = new Float32Array(size);
+    this.nextVy = new Float32Array(size);
+    this.pressure = new Float32Array(size);
+    this.div = new Float32Array(size);
+
+    this.numTracers = 800;
+    this.tx = new Float32Array(this.numTracers);
+    this.ty = new Float32Array(this.numTracers);
+    this.tSpeed = new Float32Array(this.numTracers);
+
+    this.buoyancy = 3.6;
+    this.viscosity = 0.05;
+    this.palette = PALETTES.amber_ember;
+
+    this.init();
+  }
+
+  init(seed = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    this.vx.fill(0);
+    this.vy.fill(0);
+    this.pressure.fill(0);
+
+    for (let y = 0; y < gh; y++) {
+      const yNorm = y / gh;
+      for (let x = 0; x < gw; x++) {
+        const xNorm = x / gw;
+        const pert = Math.sin(xNorm * Math.PI * 6) * 0.12 * Math.sin(yNorm * Math.PI);
+        this.temp[y * gw + x] = Math.max(0, Math.min(1.0, (1.0 - yNorm) + pert));
+      }
+    }
+
+    for (let i = 0; i < this.numTracers; i++) {
+      this.tx[i] = Math.random() * gw;
+      this.ty[i] = Math.random() * gh;
+      this.tSpeed[i] = 0;
+    }
+  }
+
+  step(dt = 0.016, mouse = null, env = null) {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const T = this.temp;
+    const nT = this.nextTemp;
+    const vx = this.vx;
+    const vy = this.vy;
+    const nVx = this.nextVx;
+    const nVy = this.nextVy;
+    const p = this.pressure;
+    const div = this.div;
+
+    const buoyK = this.buoyancy * (env ? (1.0 + env.gravity) : 1.0);
+    const visc = (env ? env.viscosity : this.viscosity) * 0.5;
+
+    // 1. Buoyancy force: hot fluid rises (-vy), cold fluid sinks (+vy)
+    for (let y = 1; y < gh - 1; y++) {
+      const yOffset = y * gw;
+      for (let x = 1; x < gw - 1; x++) {
+        const idx = yOffset + x;
+        const buoyancyForce = (T[idx] - 0.5) * buoyK;
+        vy[idx] -= buoyancyForce * dt * 8.0;
+      }
+    }
+
+    // Mouse Thermal Injector
+    if (mouse && mouse.down) {
+      const scaleX = gw / this.canvas.width;
+      const scaleY = gh / this.canvas.height;
+      const mx = Math.floor(mouse.x * scaleX);
+      const my = Math.floor(mouse.y * scaleY);
+      const r = 10;
+
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          const px = mx + dx;
+          const py = my + dy;
+          if (px >= 1 && px < gw - 1 && py >= 1 && py < gh - 1) {
+            const idx = py * gw + px;
+            if (mouse.button === 2) {
+              T[idx] = 0.0;
+              vy[idx] += 12.0;
+            } else {
+              T[idx] = 1.0;
+              vy[idx] -= 18.0;
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Enforce Incompressibility (Poisson Pressure Solver)
+    for (let y = 1; y < gh - 1; y++) {
+      const yOffset = y * gw;
+      for (let x = 1; x < gw - 1; x++) {
+        const idx = yOffset + x;
+        div[idx] = -0.5 * (vx[idx + 1] - vx[idx - 1] + vy[idx + gw] - vy[idx - gw]);
+        p[idx] = 0;
+      }
+    }
+
+    for (let iter = 0; iter < 8; iter++) {
+      for (let y = 1; y < gh - 1; y++) {
+        const yOffset = y * gw;
+        for (let x = 1; x < gw - 1; x++) {
+          const idx = yOffset + x;
+          p[idx] = (div[idx] + p[idx - 1] + p[idx + 1] + p[idx - gw] + p[idx + gw]) * 0.25;
+        }
+      }
+    }
+
+    for (let y = 1; y < gh - 1; y++) {
+      const yOffset = y * gw;
+      for (let x = 1; x < gw - 1; x++) {
+        const idx = yOffset + x;
+        vx[idx] -= 0.5 * (p[idx + 1] - p[idx - 1]);
+        vy[idx] -= 0.5 * (p[idx + gw] - p[idx - gw]);
+      }
+    }
+
+    // 3. Semi-Lagrangian Advection
+    for (let y = 1; y < gh - 1; y++) {
+      const yOffset = y * gw;
+      for (let x = 1; x < gw - 1; x++) {
+        const idx = yOffset + x;
+        let prevX = x - vx[idx] * dt * 14.0;
+        let prevY = y - vy[idx] * dt * 14.0;
+
+        if (prevX < 1) prevX = 1; else if (prevX > gw - 2) prevX = gw - 2;
+        if (prevY < 1) prevY = 1; else if (prevY > gh - 2) prevY = gh - 2;
+
+        const x0 = Math.floor(prevX);
+        const y0 = Math.floor(prevY);
+        const fx = prevX - x0;
+        const fy = prevY - y0;
+
+        const i00 = y0 * gw + x0;
+        const i10 = i00 + 1;
+        const i01 = i00 + gw;
+        const i11 = i01 + 1;
+
+        const valT = (1 - fx) * (1 - fy) * T[i00] + fx * (1 - fy) * T[i10] + (1 - fx) * fy * T[i01] + fx * fy * T[i11];
+        const valVx = (1 - fx) * (1 - fy) * vx[i00] + fx * (1 - fy) * vx[i10] + (1 - fx) * fy * vx[i01] + fx * fy * vx[i11];
+        const valVy = (1 - fx) * (1 - fy) * vy[i00] + fx * (1 - fy) * vy[i10] + (1 - fx) * fy * vy[i01] + fx * fy * vy[i11];
+
+        nT[idx] = valT;
+        nVx[idx] = valVx * (1.0 - visc);
+        nVy[idx] = valVy * (1.0 - visc);
+      }
+    }
+
+    // Hot bottom, cold top
+    for (let x = 0; x < gw; x++) {
+      nT[(gh - 1) * gw + x] = 1.0;
+      nT[x] = 0.0;
+      nVy[(gh - 1) * gw + x] = 0;
+      nVy[x] = 0;
+    }
+
+    T.set(nT);
+    vx.set(nVx);
+    vy.set(nVy);
+
+    // 4. Update 800 Tracer Streamlines
+    for (let i = 0; i < this.numTracers; i++) {
+      const gx = Math.max(1, Math.min(gw - 2, Math.floor(this.tx[i])));
+      const gy = Math.max(1, Math.min(gh - 2, Math.floor(this.ty[i])));
+      const idx = gy * gw + gx;
+
+      const spdX = vx[idx];
+      const spdY = vy[idx];
+      this.tx[i] += spdX * dt * 18.0;
+      this.ty[i] += spdY * dt * 18.0;
+      this.tSpeed[i] = Math.hypot(spdX, spdY);
+
+      if (this.tx[i] < 1 || this.tx[i] >= gw - 1 || this.ty[i] < 1 || this.ty[i] >= gh - 1) {
+        this.tx[i] = Math.random() * (gw - 4) + 2;
+        this.ty[i] = gh - 4;
+      }
+    }
+  }
+
+  render() {
+    const gw = this.gridW;
+    const gh = this.gridH;
+    const T = this.temp;
+    const data = this.offImgData.data;
+    const pal = this.palette;
+
+    let pIdx = 0;
+    for (let i = 0; i < T.length; i++) {
+      const val = Math.max(0, Math.min(1.0, T[i]));
+      const t = val * 2.99;
+      const idx = Math.floor(t);
+      const frac = t - idx;
+      const c1 = pal[idx];
+      const c2 = pal[idx + 1] || pal[idx];
+
+      data[pIdx] = Math.floor(c1[0] + (c2[0] - c1[0]) * frac);
+      data[pIdx + 1] = Math.floor(c1[1] + (c2[1] - c1[1]) * frac);
+      data[pIdx + 2] = Math.floor(c1[2] + (c2[2] - c1[2]) * frac);
+      data[pIdx + 3] = 255;
+      pIdx += 4;
+    }
+
+    this.offCtx.putImageData(this.offImgData, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.drawImage(this.offCanvas, 0, 0, this.canvas.width, this.canvas.height);
+
+    const scaleX = this.canvas.width / gw;
+    const scaleY = this.canvas.height / gh;
+    this.ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+    for (let i = 0; i < this.numTracers; i++) {
+      const spd = Math.min(1.0, this.tSpeed[i] / 4.0);
+      const sz = 1.4 + spd * 2.2;
+      this.ctx.fillRect(this.tx[i] * scaleX, this.ty[i] * scaleY, sz, sz);
+    }
+  }
+}
+
+/* ========================================================================= */
 /* Curated Presets                                                          */
 /* ========================================================================= */
 const PRESETS = [
@@ -1397,6 +2422,76 @@ const PRESETS = [
     name: "Turing Reef Coral",
     desc: "Labyrinthine Turing morphogenetic patterns and biocatalytic skin morphogenesis.",
     params: { feed: 0.0545, kill: 0.0620, substeps: 5 }
+  },
+  {
+    id: "lenia_orbium",
+    engine: "lenia",
+    name: "Orbium Soliton Glider",
+    desc: "Self-organizing solitary artificial organism maintaining stable internal rotation and translational locomotion.",
+    params: { muG: 0.15, sigmaG: 0.017, radius: 12 }
+  },
+  {
+    id: "lenia_colony",
+    engine: "lenia",
+    name: "Continuous Slime Colony",
+    desc: "Percolating continuous multi-cellular biomorphic mass with pulsating pseudopod extensions.",
+    params: { muG: 0.14, sigmaG: 0.025, radius: 14 }
+  },
+  {
+    id: "ferrofluid_spikes",
+    engine: "ferrofluid",
+    name: "Rosensweig Spikes",
+    desc: "Intense magnetic potential triggering supercritical normal-field instability and sharp conical fluid peaks.",
+    params: { magCoupling: 2.1, tension: 0.15 }
+  },
+  {
+    id: "ferrofluid_mercury",
+    engine: "ferrofluid",
+    name: "Liquid Chrome Pool",
+    desc: "Smooth superparamagnetic pool with high surface tension and specular metallic reflections.",
+    params: { magCoupling: 0.9, tension: 0.28 }
+  },
+  {
+    id: "dla_coral",
+    engine: "fractal_growth",
+    name: "Dendritic Coral Cluster",
+    desc: "Diffusion-limited aggregation creating delicate organic coral filigrees with age-gradient luminescence.",
+    params: { stickProb: 0.88, numWalkers: 1600 }
+  },
+  {
+    id: "dla_mineral",
+    engine: "fractal_growth",
+    name: "Arborescent Mineral Tree",
+    desc: "Rapid crystallographic dendrite branching simulating pyrolusite manganese dendrites in sedimentary rocks.",
+    params: { stickProb: 0.95, numWalkers: 1200 }
+  },
+  {
+    id: "excitable_rotor",
+    engine: "excitable_medium",
+    name: "Archimedean Spiral Rotor",
+    desc: "Self-perpetuating activator-inhibitor rotor core generating endless periodic biochemical wavefronts.",
+    params: { a: 0.75, b: 0.02, diffU: 0.32 }
+  },
+  {
+    id: "excitable_turbulence",
+    engine: "excitable_medium",
+    name: "Cardiac Wave Turbulence",
+    desc: "High-excitability medium with multiple colliding spiral rotors undergoing wavefront breakup and annihilation.",
+    params: { a: 0.88, b: 0.015, diffU: 0.38 }
+  },
+  {
+    id: "convection_rolls",
+    engine: "thermal_convection",
+    name: "Rayleigh-Bénard Roll Cells",
+    desc: "Symmetric paired counter-rotating convective fluid rolls driven by vertical thermal buoyancy gradient.",
+    params: { buoyancy: 3.5, viscosity: 0.04 }
+  },
+  {
+    id: "convection_mantle",
+    engine: "thermal_convection",
+    name: "Buoyant Mantle Plume",
+    desc: "Concentrated high-temperature ascending mantle diapir mushroom plume piercing cooler boundary layers.",
+    params: { buoyancy: 5.5, viscosity: 0.06 }
   }
 ];
 
@@ -1429,7 +2524,7 @@ class VantaStudioApp {
     this.mediaRecorder = null;
     this.recordedChunks = [];
 
-    // All 8 Universes
+    // All 13 Universes
     this.engines = {
       particle_life: new ParticleLifeEngine(this.canvas),
       physarum: new PhysarumEngine(this.canvas),
@@ -1438,7 +2533,12 @@ class VantaStudioApp {
       quantum_wave: new QuantumWaveEngine(this.canvas),
       crystal_growth: new CrystalGrowthEngine(this.canvas),
       flow_field: new FlowFieldEngine(this.canvas),
-      reaction_diffusion: new ReactionDiffusionEngine(this.canvas)
+      reaction_diffusion: new ReactionDiffusionEngine(this.canvas),
+      lenia: new LeniaEngine(this.canvas),
+      ferrofluid: new FerrofluidEngine(this.canvas),
+      fractal_growth: new FractalGrowthEngine(this.canvas),
+      excitable_medium: new ExcitableMediumEngine(this.canvas),
+      thermal_convection: new ThermalConvectionEngine(this.canvas)
     };
     this.activeEngineId = 'particle_life';
 
@@ -1509,6 +2609,8 @@ class VantaStudioApp {
       else if (this.activeEngine.numStars) count = this.activeEngine.numStars;
       else if (this.activeEngine.numBoids) count = this.activeEngine.numBoids;
       else if (this.activeEngine.numAgents) count = this.activeEngine.numAgents;
+      else if (this.activeEngine.numWalkers) count = this.activeEngine.numWalkers;
+      else if (this.activeEngine.numTracers) count = this.activeEngine.numTracers;
       else if (this.activeEngine.gridW) count = this.activeEngine.gridW * this.activeEngine.gridH;
       entVal.innerText = count.toLocaleString();
     }
@@ -1690,9 +2792,17 @@ class VantaStudioApp {
         this.closeDrawer();
         document.getElementById('presets-modal').classList.remove('open');
         document.body.classList.remove('zen-mode');
-      } else if (e.code >= 'Digit1' && e.code <= 'Digit8') {
+      } else if (e.code >= 'Digit1' && e.code <= 'Digit9') {
         const idx = parseInt(e.code.replace('Digit', '')) - 1;
         if (WORLDS[idx]) this.switchWorld(WORLDS[idx].id);
+      } else if (e.code === 'Digit0') {
+        if (WORLDS[9]) this.switchWorld(WORLDS[9].id);
+      } else if (e.code === 'Minus') {
+        if (WORLDS[10]) this.switchWorld(WORLDS[10].id);
+      } else if (e.code === 'Equal') {
+        if (WORLDS[11]) this.switchWorld(WORLDS[11].id);
+      } else if (e.code === 'Backspace') {
+        if (WORLDS[12]) this.switchWorld(WORLDS[12].id);
       }
     });
   }
@@ -2042,6 +3152,302 @@ class VantaStudioApp {
       this.setupSlider('param-phys-dist', (val) => {
         engine.sensorDist = val;
         document.getElementById('val-phys-dist').innerText = `${val.toFixed(0)}px`;
+      });
+
+    } else if (this.activeEngineId === 'lenia') {
+      container.innerHTML = `
+        <div class="section-title"><span>LENIA PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Growth Center (μ)</label>
+            <span class="param-val" id="val-lenia-mu">${engine.muG.toFixed(3)}</span>
+          </div>
+          <input type="range" id="param-lenia-mu" min="0.08" max="0.30" step="0.005" value="${engine.muG}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Growth Width (σ)</label>
+            <span class="param-val" id="val-lenia-sigma">${engine.sigmaG.toFixed(3)}</span>
+          </div>
+          <input type="range" id="param-lenia-sigma" min="0.008" max="0.045" step="0.002" value="${engine.sigmaG}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Kernel Radius (R)</label>
+            <span class="param-val" id="val-lenia-radius">${engine.radius}px</span>
+          </div>
+          <input type="range" id="param-lenia-radius" min="8" max="18" step="1" value="${engine.radius}">
+        </div>
+      `;
+      this.setupSlider('param-lenia-mu', (val) => {
+        engine.muG = val;
+        document.getElementById('val-lenia-mu').innerText = val.toFixed(3);
+      });
+      this.setupSlider('param-lenia-sigma', (val) => {
+        engine.sigmaG = val;
+        document.getElementById('val-lenia-sigma').innerText = val.toFixed(3);
+      });
+      this.setupSlider('param-lenia-radius', (val) => {
+        engine.radius = Math.round(val);
+        engine.buildKernel();
+        document.getElementById('val-lenia-radius').innerText = `${engine.radius}px`;
+      });
+
+    } else if (this.activeEngineId === 'ferrofluid') {
+      container.innerHTML = `
+        <div class="section-title"><span>FERROFLUID PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Rosensweig Coupling (α)</label>
+            <span class="param-val" id="val-ff-coupling">${engine.magCoupling.toFixed(2)}</span>
+          </div>
+          <input type="range" id="param-ff-coupling" min="0.4" max="3.2" step="0.1" value="${engine.magCoupling}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Surface Tension (γ)</label>
+            <span class="param-val" id="val-ff-tension">${engine.tension.toFixed(2)}</span>
+          </div>
+          <input type="range" id="param-ff-tension" min="0.06" max="0.40" step="0.02" value="${engine.tension}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Substrate Viscosity</label>
+            <span class="param-val" id="val-ff-visc">${engine.viscosity.toFixed(2)}</span>
+          </div>
+          <input type="range" id="param-ff-visc" min="0.02" max="0.18" step="0.01" value="${engine.viscosity}">
+        </div>
+      `;
+      this.setupSlider('param-ff-coupling', (val) => {
+        engine.magCoupling = val;
+        document.getElementById('val-ff-coupling').innerText = val.toFixed(2);
+      });
+      this.setupSlider('param-ff-tension', (val) => {
+        engine.tension = val;
+        document.getElementById('val-ff-tension').innerText = val.toFixed(2);
+      });
+      this.setupSlider('param-ff-visc', (val) => {
+        engine.viscosity = val;
+        document.getElementById('val-ff-visc').innerText = val.toFixed(2);
+      });
+
+    } else if (this.activeEngineId === 'fractal_growth') {
+      container.innerHTML = `
+        <div class="section-title"><span>FRACTAL DLA PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Brownian Walkers</label>
+            <span class="param-val" id="val-dla-walkers">${engine.numWalkers}</span>
+          </div>
+          <input type="range" id="param-dla-walkers" min="400" max="2400" step="200" value="${engine.numWalkers}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Sticking Probability</label>
+            <span class="param-val" id="val-dla-prob">${Math.round(engine.stickProb * 100)}%</span>
+          </div>
+          <input type="range" id="param-dla-prob" min="0.2" max="1.0" step="0.05" value="${engine.stickProb}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Diffusion Step Size</label>
+            <span class="param-val" id="val-dla-step">${engine.stepSize.toFixed(1)}px</span>
+          </div>
+          <input type="range" id="param-dla-step" min="0.8" max="3.5" step="0.2" value="${engine.stepSize}">
+        </div>
+      `;
+      this.setupSlider('param-dla-walkers', (val) => {
+        engine.numWalkers = Math.round(val);
+        engine.wx = new Float32Array(engine.numWalkers);
+        engine.wy = new Float32Array(engine.numWalkers);
+        for (let i = 0; i < engine.numWalkers; i++) engine.respawnWalker(i);
+        document.getElementById('val-dla-walkers').innerText = engine.numWalkers;
+        this.updateHUD();
+      });
+      this.setupSlider('param-dla-prob', (val) => {
+        engine.stickProb = val;
+        document.getElementById('val-dla-prob').innerText = `${Math.round(val * 100)}%`;
+      });
+      this.setupSlider('param-dla-step', (val) => {
+        engine.stepSize = val;
+        document.getElementById('val-dla-step').innerText = `${val.toFixed(1)}px`;
+      });
+
+    } else if (this.activeEngineId === 'excitable_medium') {
+      container.innerHTML = `
+        <div class="section-title"><span>EXCITABLE MEDIUM PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Excitability (a)</label>
+            <span class="param-val" id="val-ex-a">${engine.a.toFixed(2)}</span>
+          </div>
+          <input type="range" id="param-ex-a" min="0.45" max="1.1" step="0.05" value="${engine.a}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Refractory Decay (b)</label>
+            <span class="param-val" id="val-ex-b">${engine.b.toFixed(3)}</span>
+          </div>
+          <input type="range" id="param-ex-b" min="0.005" max="0.06" step="0.005" value="${engine.b}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Activator Diffusion</label>
+            <span class="param-val" id="val-ex-diff">${engine.diffU.toFixed(2)}</span>
+          </div>
+          <input type="range" id="param-ex-diff" min="0.10" max="0.55" step="0.05" value="${engine.diffU}">
+        </div>
+      `;
+      this.setupSlider('param-ex-a', (val) => {
+        engine.a = val;
+        document.getElementById('val-ex-a').innerText = val.toFixed(2);
+      });
+      this.setupSlider('param-ex-b', (val) => {
+        engine.b = val;
+        document.getElementById('val-ex-b').innerText = val.toFixed(3);
+      });
+      this.setupSlider('param-ex-diff', (val) => {
+        engine.diffU = val;
+        document.getElementById('val-ex-diff').innerText = val.toFixed(2);
+      });
+
+    } else if (this.activeEngineId === 'thermal_convection') {
+      container.innerHTML = `
+        <div class="section-title"><span>CONVECTION PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Rayleigh Buoyancy (Ra)</label>
+            <span class="param-val" id="val-tc-buoy">${engine.buoyancy.toFixed(1)}</span>
+          </div>
+          <input type="range" id="param-tc-buoy" min="1.0" max="8.0" step="0.5" value="${engine.buoyancy}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Fluid Viscosity (ν)</label>
+            <span class="param-val" id="val-tc-visc">${engine.viscosity.toFixed(2)}</span>
+          </div>
+          <input type="range" id="param-tc-visc" min="0.01" max="0.15" step="0.01" value="${engine.viscosity}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Tracer Filaments</label>
+            <span class="param-val" id="val-tc-tracers">${engine.numTracers}</span>
+          </div>
+          <input type="range" id="param-tc-tracers" min="200" max="1600" step="100" value="${engine.numTracers}">
+        </div>
+      `;
+      this.setupSlider('param-tc-buoy', (val) => {
+        engine.buoyancy = val;
+        document.getElementById('val-tc-buoy').innerText = val.toFixed(1);
+      });
+      this.setupSlider('param-tc-visc', (val) => {
+        engine.viscosity = val;
+        document.getElementById('val-tc-visc').innerText = val.toFixed(2);
+      });
+      this.setupSlider('param-tc-tracers', (val) => {
+        engine.numTracers = Math.round(val);
+        engine.tx = new Float32Array(engine.numTracers);
+        engine.ty = new Float32Array(engine.numTracers);
+        engine.tSpeed = new Float32Array(engine.numTracers);
+        for (let i = 0; i < engine.numTracers; i++) {
+          engine.tx[i] = Math.random() * engine.gridW;
+          engine.ty[i] = Math.random() * engine.gridH;
+          engine.tSpeed[i] = 0;
+        }
+        document.getElementById('val-tc-tracers').innerText = engine.numTracers;
+        this.updateHUD();
+      });
+
+    } else if (this.activeEngineId === 'quantum_wave') {
+      container.innerHTML = `
+        <div class="section-title"><span>QUANTUM WAVE PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Wave Dispersion Speed</label>
+            <span class="param-val" id="val-qw-speed">1.0x</span>
+          </div>
+          <input type="range" id="param-qw-speed" min="0.3" max="2.5" step="0.1" value="1.0">
+        </div>
+      `;
+      this.setupSlider('param-qw-speed', (val) => {
+        document.getElementById('val-qw-speed').innerText = `${val.toFixed(1)}x`;
+      });
+
+    } else if (this.activeEngineId === 'crystal_growth') {
+      container.innerHTML = `
+        <div class="section-title"><span>CRYSTAL GROWTH PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Supercooling Factor</label>
+            <span class="param-val" id="val-cg-undercool">${engine.undercooling ? engine.undercooling.toFixed(2) : '0.65'}</span>
+          </div>
+          <input type="range" id="param-cg-undercool" min="0.2" max="0.9" step="0.05" value="${engine.undercooling || 0.65}">
+        </div>
+      `;
+      this.setupSlider('param-cg-undercool', (val) => {
+        engine.undercooling = val;
+        document.getElementById('val-cg-undercool').innerText = val.toFixed(2);
+      });
+
+    } else if (this.activeEngineId === 'flow_field') {
+      container.innerHTML = `
+        <div class="section-title"><span>CURL FLOW PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Particle Count</label>
+            <span class="param-val" id="val-ff-particles">${engine.numParticles}</span>
+          </div>
+          <input type="range" id="param-ff-particles" min="1000" max="6000" step="500" value="${engine.numParticles}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Flow Velocity</label>
+            <span class="param-val" id="val-ff-speed">${engine.speed ? engine.speed.toFixed(1) : '2.0'}</span>
+          </div>
+          <input type="range" id="param-ff-speed" min="0.5" max="5.0" step="0.5" value="${engine.speed || 2.0}">
+        </div>
+      `;
+      this.setupSlider('param-ff-particles', (val) => {
+        engine.numParticles = Math.round(val);
+        engine.x = new Float32Array(engine.numParticles);
+        engine.y = new Float32Array(engine.numParticles);
+        engine.vx = new Float32Array(engine.numParticles);
+        engine.vy = new Float32Array(engine.numParticles);
+        engine.age = new Float32Array(engine.numParticles);
+        engine.init();
+        document.getElementById('val-ff-particles').innerText = engine.numParticles;
+        this.updateHUD();
+      });
+      this.setupSlider('param-ff-speed', (val) => {
+        engine.speed = val;
+        document.getElementById('val-ff-speed').innerText = val.toFixed(1);
+      });
+
+    } else if (this.activeEngineId === 'reaction_diffusion') {
+      container.innerHTML = `
+        <div class="section-title"><span>TURING PARAMETERS</span></div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Feed Rate (F)</label>
+            <span class="param-val" id="val-rd-feed">${engine.feed.toFixed(4)}</span>
+          </div>
+          <input type="range" id="param-rd-feed" min="0.0100" max="0.0800" step="0.0020" value="${engine.feed}">
+        </div>
+        <div class="param-row">
+          <div class="param-info">
+            <label>Kill Rate (K)</label>
+            <span class="param-val" id="val-rd-kill">${engine.kill.toFixed(4)}</span>
+          </div>
+          <input type="range" id="param-rd-kill" min="0.0450" max="0.0700" step="0.0010" value="${engine.kill}">
+        </div>
+      `;
+      this.setupSlider('param-rd-feed', (val) => {
+        engine.feed = val;
+        document.getElementById('val-rd-feed').innerText = val.toFixed(4);
+      });
+      this.setupSlider('param-rd-kill', (val) => {
+        engine.kill = val;
+        document.getElementById('val-rd-kill').innerText = val.toFixed(4);
       });
 
     } else {
